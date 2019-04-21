@@ -1,0 +1,26 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: ubuntu:16.04
+
+    steps:
+      - run:
+          name: Update
+          command: apt update -y
+
+      - run:
+          name: Install
+          command: |
+            apt install -y git ssh
+            apt install -y cmake gcc g++
+
+      - checkout
+
+      - run:
+          name: Configure and Build
+          command: |
+            ./alex configure
+            ./alex build
+            ./alex test

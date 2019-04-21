@@ -1,0 +1,10 @@
+#!/bin/bash
+
+orb_load "workspace"
+
+if [[ ! -d "${ALEX_WORKSPACE_PATH}" ]]; then
+  echo "Run 'configure' first"
+  exit 255
+fi
+
+cd "${ALEX_WORKSPACE_PATH}" && ctest "$@"

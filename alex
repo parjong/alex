@@ -1,0 +1,20 @@
+#!/bin/bash
+
+ALEX_PROJECT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+COMMAND="$1"
+shift
+
+ALEX_COMMAND_PATH="${ALEX_PROJECT_PATH}/infra/command/${COMMAND}"
+
+if [[ ! -f "${ALEX_COMMAND_PATH}" ]]; then
+  echo "ERROR: '${COMMAND}' is not supported"
+  exit 255
+fi
+
+function orb_load()
+{
+  source "${ALEX_PROJECT_PATH}/infra/orb/$1.orb"
+}
+
+source "${ALEX_COMMAND_PATH}"
