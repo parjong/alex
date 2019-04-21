@@ -1,0 +1,7 @@
+#!/bin/bash
+
+orb_load "workspace"
+
+mkdir -p "${ALEX_WORKSPACE_PATH}"
+
+cd "${ALEX_WORKSPACE_PATH}" && cmake "${ALEX_PROJECT_PATH}" "$@"
