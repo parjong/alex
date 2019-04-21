@@ -9,6 +9,10 @@ macro(alex_include PREFIX)
   include("${ALEX_PROJECT_SOURCE_DIR}/infra/cmake/modules/${PREFIX}.cmake")
 endmacro(alex_include)
 
+macro(alex_find_package PREFIX)
+  find_package(${PREFIX} CONFIG NO_DEFAULT_PATH PATHS "${ALEX_PROJECT_SOURCE_DIR}/infra/cmake/packages" ${ARGN})
+endmacro(alex_find_package)
+
 # Set standard C++ 11 (without extension) as the default configuration
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
