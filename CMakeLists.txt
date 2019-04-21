@@ -9,6 +9,11 @@ macro(alex_include PREFIX)
   include("${ALEX_PROJECT_SOURCE_DIR}/infra/cmake/modules/${PREFIX}.cmake")
 endmacro(alex_include)
 
+# Set standard C++ 11 (without extension) as the default configuration
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 enable_testing()
 
 add_subdirectory(code)
