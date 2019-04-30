@@ -15,6 +15,7 @@ jobs:
           command: |
             apt install -y git ssh
             apt install -y cmake gcc g++
+            apt install -y libprotobuf-dev protobuf-compiler
 
       - checkout
 
