@@ -31,12 +31,33 @@ int decode(int, const char * const *)
   return 0;
 }
 
+int encode(int, const char * const *)
+{
+  caffe::NetParameter net;
+
+  google::protobuf::io::IstreamInputStream iis{&std::cin};
+
+  if (!google::protobuf::TextFormat::Parse(&iis, &net))
+  {
+    // TODO Show error message
+    return -1;
+  }
+
+  if (!net.SerializeToOstream(&std::cout))
+  {
+    // TODO Show error message
+    return -1;
+  }
+
+  return 0;
+}
+
 int main(int argc, char **argv)
 {
   std::map<std::string, int (*)(int, const char * const *)> commands;
 
   commands["decode"] = decode;
-  // TODO Implement 'encode'
+  commands["encode"] = encode;
 
   if (argc < 2)
   {
