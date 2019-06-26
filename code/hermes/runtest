@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SAMPLE_APP_PATH=$1
+
+echo "SAMPLE_APP_PATH: ${SAMPLE_APP_PATH}"
+
+export -n LOG;
+
+if [[ $(${SAMPLE_APP_PATH} | wc -l) -ne 0 ]]; then
+  echo "FAILED: log is disabled, but sample app shows some logs"
+  exit 255
+fi
+
+export LOG=1
+
+if [[ $(${SAMPLE_APP_PATH} | wc -l) -eq 0 ]]; then
+  echo "FAILED: log is enabled, but sample app does not show any log"
+  exit 255
+fi
+
+echo "PASSED"
+exit 0
