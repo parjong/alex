@@ -6,13 +6,7 @@ set(ALEX_PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR} CACHE INTERNAL "top-level sour
 set(ALEX_PROJECT_BINARY_DIR ${PROJECT_BINARY_DIR} CACHE INTERNAL "top-level binrary directory")
 set(ALEX_OVERLAY_DIR "${ALEX_PROJECT_BINARY_DIR}/overlay" CACHE INTERNAL "overlay directory")
 
-macro(alex_include PREFIX)
-  include("${ALEX_PROJECT_SOURCE_DIR}/infra/cmake/modules/${PREFIX}.cmake")
-endmacro(alex_include)
-
-macro(alex_find_package PREFIX)
-  find_package(${PREFIX} CONFIG NO_DEFAULT_PATH PATHS "${ALEX_PROJECT_SOURCE_DIR}/infra/cmake/packages" ${ARGN})
-endmacro(alex_find_package)
+include(infra/cmake/alex.cmake)
 
 # Set standard C++ 11 (without extension) as the default configuration
 set(CMAKE_CXX_STANDARD 11)
