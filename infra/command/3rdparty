@@ -1,0 +1,36 @@
+COMMAND="$1"; shift
+
+if [[ -z "${COMMAND}" ]]; then
+  echo "ERROR: COMMAND is missing"
+  exit 255
+fi
+
+case "${COMMAND}" in
+  "download")
+    export PKG_NAME="$1"; shift
+
+    if [[ -z "${PKG_NAME}" ]]; then
+      echo "ERROR: PKG_NAME is missing"
+      exit 255
+    fi
+
+    export PKG_VERSION="$1"; shift
+
+    if [[ -z "${PKG_VERSION}" ]]; then
+      echo "ERROR: PKG_VERSION is missing"
+      exit 255
+    fi
+
+    cmake \
+      -D ALEX_PROJECT_SOURCE_DIR="${ALEX_PROJECT_PATH}" \
+      -D PKG_NAME="${PKG_NAME}" \
+      -D PKG_VERSION="${PKG_VERSION}" \
+      -P "${ALEX_PROJECT_PATH}/infra/cmake/scripts/3rdparty-download.cmake"
+    ;;
+  # TODO Support install
+  # TODO Support uninstall
+  *)
+    echo "INVALID COMMAND '${COMMAND}'"
+    exit 255
+    ;;
+esac
