@@ -1,3 +1,63 @@
+# _Download(NAME ... URL ... OUTPUT_DIRECTORY ... WORKING_DIRECTORY ...)
+function(_Download)
+  include(CMakeParseArguments)
+  cmake_parse_arguments(ARG "" "NAME;URL;OUTPUT_DIRECTORY;WORKING_DIRECTORY" "" ${ARGN})
+
+  if(NOT ARG_NAME)
+    message(FATAL_ERROR "NAME is missing")
+  endif(NOT ARG_NAME)
+
+  if(NOT ARG_URL)
+    message(FATAL_ERROR "URL is missing")
+  endif(NOT ARG_URL)
+
+  if(NOT ARG_OUTPUT_DIRECTORY)
+    message(FATAL_ERROR "OUTPUT_DIRECTORY is missing")
+  endif(NOT ARG_OUTPUT_DIRECTORY)
+
+  if(NOT ARG_WORKING_DIRECTORY)
+    message(FATAL_ERROR "WORKING_DIRECTORY is missing")
+  endif(NOT ARG_WORKING_DIRECTORY)
+
+  set(NAME "${ARG_NAME}")
+  set(OUT_DIR "${ARG_OUTPUT_DIRECTORY}")
+  set(TMP_DIR "${ARG_WORKING_DIRECTORY}")
+
+  get_filename_component(_EXT ${URL} EXT)
+
+  set(DOWNLOADED_FILE "${TMP_DIR}/download.${_EXT}")
+  set(UNZIPPED_DIR "${TMP_DIR}/unzipped")
+
+  file(REMOVE_RECURSE "${OUT_DIR}" "${TMP_DIR}")
+
+  file(MAKE_DIRECTORY "${TMP_DIR}")
+  file(MAKE_DIRECTORY "${UNZIPPED_DIR}")
+
+  message(STATUS "Download ${NAME} from ${URL}")
+  file(DOWNLOAD ${URL} "${DOWNLOADED_FILE}")
+  message(STATUS "Download ${NAME} from ${URL} - done")
+
+  message(STATUS "Extract ${NAME}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz "${DOWNLOADED_FILE}"
+                  WORKING_DIRECTORY "${UNZIPPED_DIR}")
+  # TODO Check exitcode
+  message(STATUS "Extract ${NAME} - done")
+
+  message(STATUS "Analyze and prepare ${NAME}")
+  file(GLOB contents "${UNZIPPED_DIR}/*")
+  list(LENGTH contents n)
+  if(NOT n EQUAL 1 OR NOT IS_DIRECTORY "${contents}")
+    set(contents "${UNZIPPED_DIR}")
+  endif()
+
+  get_filename_component(contents ${contents} ABSOLUTE)
+
+  file(RENAME ${contents} "${OUT_DIR}")
+  message(STATUS "Analyze and prepare ${NAME} - done")
+
+  file(REMOVE_RECURSE "${WORKING_DIR}")
+endfunction(_Download)
+
 # TODO Support (GLOBAL) verbose level control
 # TODO Support MD5 HASH check
 function(ExternalSource_Download PREFIX)
@@ -36,41 +96,13 @@ function(ExternalSource_Download PREFIX)
   if(NOT STAMP_VALID)
     set(WORKING_DIR "${EXTERNAL_DIR}/${DIRNAME}-tmp")
 
-    get_filename_component(DOWNLOAD_FILENAME ${URL} NAME)
+    _Download(
+      NAME "${PREFIX}"
+      URL "${URL}"
+      OUTPUT_DIRECTORY "${SOURCE_DIR}"
+      WORKING_DIRECTORY "${WORKING_DIR}"
+    )
 
-    set(DOWNLOAD_DIR "${WORKING_DIR}/download")
-    set(DOWNLOAD_FILE "${DOWNLOAD_DIR}/${DOWNLOAD_FILENAME}")
-
-    set(UNZIP_DIR "${WORKING_DIR}/unzip")
-
-    file(REMOVE_RECURSE "${SOURCE_DIR}" "${WORKING_DIR}")
-
-    file(MAKE_DIRECTORY "${DOWNLOAD_DIR}")
-    file(MAKE_DIRECTORY "${UNZIP_DIR}")
-
-    message(STATUS "Download ${PREFIX} from ${URL}")
-    file(DOWNLOAD ${URL} "${DOWNLOAD_FILE}")
-    message(STATUS "Download ${PREFIX} from ${URL} - done")
-
-    message(STATUS "Extract ${PREFIX}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz "${DOWNLOAD_FILE}"
-                    WORKING_DIRECTORY "${UNZIP_DIR}")
-    # TODO Check exitcode
-    message(STATUS "Extract ${PREFIX} - done")
-
-    message(STATUS "Analyze and prepare ${PREFIX}")
-    file(GLOB contents "${UNZIP_DIR}/*")
-    list(LENGTH contents n)
-    if(NOT n EQUAL 1 OR NOT IS_DIRECTORY "${contents}")
-      set(contents "${UNZIP_DIR}")
-    endif()
-
-    get_filename_component(contents ${contents} ABSOLUTE)
-
-    file(RENAME ${contents} "${SOURCE_DIR}")
-    message(STATUS "Analyze and prepare ${PREFIX} - done")
-
-    file(REMOVE_RECURSE "${WORKING_DIR}")
     file(WRITE "${STAMP_FILE}" "${URL}")
   endif()
 
