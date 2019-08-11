@@ -2,6 +2,7 @@
 # TODO Support MD5 HASH check
 function(ExternalSource_Download PREFIX)
   include(CMakeParseArguments)
+  alex_include(StampTools)
 
   set(SingleValueArgs URL DIRNAME)
 
@@ -23,15 +24,16 @@ function(ExternalSource_Download PREFIX)
   set(SOURCE_DIR "${EXTERNAL_DIR}/${DIRNAME}")
   set(STAMP_FILE "${EXTERNAL_DIR}/${DIRNAME}.stamp")
 
-  if(EXISTS "${STAMP_FILE}")
-    file(READ "${STAMP_FILE}" STAMP_URL)
+  Stamp_Check(STAMP_VALID "${STAMP_FILE}" "${URL}")
 
-    if(NOT STAMP_URL STREQUAL URL)
+  if(NOT STAMP_VALID)
+    # Remove invalid STAMP
+    if(EXISTS "${STAMP_FILE}")
       file(REMOVE "${STAMP_FILE}")
-    endif()
-  endif()
+    endif(EXISTS "${STAMP_FILE}")
+  endif(NOT STAMP_VALID)
 
-  if(NOT EXISTS "${STAMP_FILE}")
+  if(NOT STAMP_VALID)
     set(WORKING_DIR "${EXTERNAL_DIR}/${DIRNAME}-tmp")
 
     get_filename_component(DOWNLOAD_FILENAME ${URL} NAME)
