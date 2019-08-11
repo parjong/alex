@@ -20,6 +20,7 @@ function(_Download)
   endif(NOT ARG_WORKING_DIRECTORY)
 
   set(NAME "${ARG_NAME}")
+  set(URL "${ARG_URL}")
   set(OUT_DIR "${ARG_OUTPUT_DIRECTORY}")
   set(TMP_DIR "${ARG_WORKING_DIRECTORY}")
 
@@ -55,7 +56,9 @@ function(_Download)
   file(RENAME ${contents} "${OUT_DIR}")
   message(STATUS "Analyze and prepare ${NAME} - done")
 
-  file(REMOVE_RECURSE "${WORKING_DIR}")
+  # WARNING! file(REMOVE_RECURE) removes the current source directory!
+  # TODO Implement "Guard"
+  file(REMOVE_RECURSE "${TMP_DIR}")
 endfunction(_Download)
 
 # TODO Support (GLOBAL) verbose level control
@@ -64,13 +67,33 @@ function(ExternalSource_Download PREFIX)
   include(CMakeParseArguments)
   alex_include(StampTools)
 
-  set(SingleValueArgs URL DIRNAME)
+  set(SingleValueArgs URL DIRNAME OUTPUT_DIRECTORY WORKING_DIRECTORY)
 
-  cmake_parse_arguments(ARG "" "${SingleValueArgs}" "" ${ARGN})
+  cmake_parse_arguments(ARG "DOWNLOAD_ONLY" "${SingleValueArgs}" "" ${ARGN})
 
   if(NOT ARG_URL)
     message(FATAL_ERROR "URL is missing")
   endif(NOT ARG_URL)
+
+  if(ARG_DOWNLOAD_ONLY)
+    if(NOT ARG_OUTPUT_DIRECTORY)
+      message(FATAL_ERROR)
+    endif(NOT ARG_OUTPUT_DIRECTORY)
+
+    if(NOT ARG_WORKING_DIRECTORY)
+      message(FATAL_ERROR)
+    endif(NOT ARG_WORKING_DIRECTORY)
+
+    _Download(
+      NAME "${PREFIX}"
+      URL "${ARG_URL}"
+      OUTPUT_DIRECTORY "${ARG_OUTPUT_DIRECTORY}"
+      WORKING_DIRECTORY "${ARG_WORKING_DIRECTORY}"
+    )
+
+    set(${PREFIX}_SOURCE_DIR "${SOURCE_DIR}" PARENT_SCOPE)
+    return()
+  endif(ARG_DOWNLOAD_ONLY)
 
   if(ARG_DIRNAME)
     set(DIRNAME "${ARG_DIRNAME}")
