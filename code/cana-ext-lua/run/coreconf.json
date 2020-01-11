@@ -1,0 +1,6 @@
+{
+  "binders" :
+  {
+    "lua"    : "lua/binder/libcanaext_lua.so"
+  }
+}

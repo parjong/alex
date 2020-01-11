@@ -1,0 +1,6 @@
+{
+  "apps" :
+  {
+    "lua_echo"    : { "type" : "lua",     "base" : "lua/apps/echo"    }
+  }
+}

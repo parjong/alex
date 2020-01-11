@@ -1,0 +1,81 @@
+include Makefile.common
+
+#
+# C Compiler
+#
+CC			= gcc
+
+CFLAGS	=
+CFLAGS	+=	-I.
+
+#
+# C++ Compiler
+#
+CXX				= g++
+
+CXXFLAGS	=
+CXXFLAGS	+=	$(CFLAGS)
+CXXFLAGS	+= 	-std=c++11
+
+#
+# Linker
+#
+LDFLAGS	=
+
+#
+# Libraries
+# 
+LIBS		=
+LIBS		+=	-ldl
+LIBS		+=	-lboost_system
+LIBS		+=	-lboost_filesystem
+LIBS		+=	-llog4cxx
+LIBS		+=	-lsqlite3
+
+#
+# Sources
+#
+CC_SRC	= 
+CC_SRC	+=	base/arg-data.cc
+CC_SRC	+=	base/env-data.cc
+CC_SRC	+=	base/debug-tools.cc
+CC_SRC	+=	monitor/lib/api.cc
+CC_SRC	+=	monitor/lib/filename-tools.cc
+CC_SRC	+=	monitor/lib/exec-tools.cc
+CC_SRC	+=	monitor/ptrace/ptrace-child.cc
+CC_SRC	+=	monitor/ptrace/ptrace-observer.cc
+CC_SRC	+=	monitor/ptrace/ptrace-monitor.cc
+CC_SRC	+=	monitor/ptrace/ptrace-wrapper.cc
+
+#
+# Objects
+#
+OBJS		= 
+OBJS		+=	$(CC_SRC:.cc=.o)
+
+#
+#	Output 
+#
+BUILT			= 	ptrace-monitor
+INSTALLED	=		$(OUTDIR)/bin/$(BUILT)
+
+#
+# 
+#
+all : clean build install
+
+build : clean $(BUILT)
+
+clean:
+	rm -rf $(OBJS)
+	rm -rf $(BUILT)
+
+$(BUILT) : $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(BUILT) $(OBJS) $(LIBS)
+
+install: 
+	mkdir -p $(dir $(INSTALLED)); cp $(BUILT) $(INSTALLED)
+
+.SUFFIXES : .cc .o
+.cc.o:
+	$(CXX) $(CXXFLAGS) -o $@ -c $<

@@ -1,0 +1,72 @@
+{
+  "tools" : [
+    {
+      "path"  : "/usr/lib/gcc/x86_64-linux-gnu/5/cc1plus",
+      "lower" : [
+        { "pat" : "(-D)(.*)",       "actions" : ["forward", "forward"] },
+        { "pat" : "(-mtune)=(.*)",  "actions" : ["skip",    "skip"] },
+        { "pat" : "(-march)=(.*)",  "actions" : ["skip",    "skip"] },
+        { "pat" : "(-f)(.*)",       "actions" : ["skip",    "skip"] },
+        { "pat" : "(-W)(.*)",       "actions" : ["skip",    "skip"] },
+        { "pat" : "(.*)",           "actions" : ["forward"] }
+      ],
+      "parse" : [
+        { "pat" : "-quiet",         "actions" : ["skip"] },
+        { "pat" : "-imultiarch",    "actions" : ["skip", "skip"] },
+        { "pat" : "-D",             "actions" : ["skip", "tag DEF", "skip"] },
+        { "pat" : "-I",             "actions" : ["skip", "tag INC", "skip"] },
+        { "pat" : "-dumpbase",      "actions" : ["skip", "skip"] },
+        { "pat" : "-auxbase",       "actions" : ["skip", "skip"] },
+        { "pat" : "-mtune",         "actions" : ["skip", "skip"] },
+        { "pat" : "-march",         "actions" : ["skip", "skip"] },
+        { "pat" : "-f",             "actions" : ["skip", "skip"] },
+        { "pat" : "-W",             "actions" : ["skip", "skip"] },
+        { "pat" : "-o",             "actions" : ["skip", "tag OUT", "skip"] },
+        { "pat" : "-.*",            "actions" : ["stop"] },
+        { "pat" : ".*",             "actions" : ["tag SRC", "skip"] }
+      ],
+      "run" : [ "str /bin/echo", "flush", "load SRC", "flush", "run" ]
+    },
+    {
+      "path"  : "/usr/bin/x86_64-linux-gnu-as",
+      "lower" : [
+        { "pat" : "(.*)",           "actions" : ["forward"] }
+      ],
+      "parse" : [
+        { "pat" : "--64",           "actions" : ["skip"] },
+        { "pat" : "-o",             "actions" : ["skip", "tag Output", "skip"] },
+        { "pat" : "-.*",            "actions" : ["stop"] },
+        { "pat" : ".*",             "actions" : ["tag Source", "skip"] }
+      ],
+      "run" : [ ]
+    },
+    {
+      "path"  : "/usr/lib/gcc/x86_64-linux-gnu/5/collect2",
+      "lower" : [
+        { "pat" : "(-plugin-opt)=(.*)",   "actions" : ["forward", "forward"] },
+        { "pat" : "(--sysroot)=(.*)",     "actions" : ["forward", "forward"] },
+        { "pat" : "(--hash-style)=(.*)",  "actions" : ["forward", "forward"] },
+        { "pat" : "(-L)(.*)",             "actions" : ["forward", "forward"] },
+        { "pat" : "(-l)(.*)",             "actions" : ["forward", "forward"] },
+        { "pat" : "(.*)",                 "actions" : ["forward"] }
+      ],
+      "parse" : [
+        { "pat" : "-plugin",              "actions" : ["skip", "skip"] },
+        { "pat" : "-plugin-opt",          "actions" : ["skip", "skip"] },
+        { "pat" : "--sysroot",            "actions" : ["skip", "skip"] },
+        { "pat" : "--build-id",           "actions" : ["skip", "skip"] },
+        { "pat" : "--hash-style",         "actions" : ["skip", "skip"] },
+        { "pat" : "--as-needed",          "actions" : ["skip"] },
+        { "pat" : "-dynamic-linker",      "actions" : ["skip", "skip"] },
+        { "pat" : "-z",                   "actions" : ["skip", "skip"] },
+        { "pat" : "-o",                   "actions" : ["skip", "tag OUTPUT", "skip"] },
+        { "pat" : "-m",                   "actions" : ["skip", "skip"] },
+        { "pat" : "-L",                   "actions" : ["skip", "skip"] },
+        { "pat" : "-l",                   "actions" : ["skip", "skip"] },
+        { "pat" : "-.*",                  "actions" : ["stop"] },
+        { "pat" : ".*",                   "actions" : ["tag SOURCE", "skip"] }
+      ],
+      "run" : [ ]
+    }
+  ]
+}

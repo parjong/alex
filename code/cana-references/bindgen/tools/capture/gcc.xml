@@ -1,0 +1,102 @@
+<actions>
+  <consume>
+    <name>consume_1</name>
+    <offset>1</offset>
+  </consume>
+
+  <consume>
+    <name>consume_2</name>
+    <offset>2</offset>    
+  </consume>
+
+  <consume>
+    <name>record_1</name>
+    <offset>1</offset>
+    <consumer>record</consumer>
+  </consume>
+
+  <consume>
+    <name>record_2</name>
+    <offset>2</offset>
+    <consumer>record</consumer>
+  </consume>
+
+  <consume>
+    <name>output</name>
+    <offset>2</offset>
+    <consumer>append</consumer>
+  </consume>
+
+  <match>
+    <name>source</name>
+    <regex>([^-].*)</regex>
+    <matcher>append</matcher>    
+    <matcher>record</matcher>
+  </match>
+
+  <match>
+    <name>tune</name>
+    <regex>-mtune=(.+)</regex>
+    <matcher>record</matcher>
+  </match>
+
+  <match>
+    <name>arch</name>
+    <regex>-march=(.+)</regex>
+    <matcher>record</matcher>
+  </match>
+</actions>
+
+<scanner>
+  <must>
+    <value>-quiet</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>-imultiarch</value>
+    <action>record_2</action>
+  </must>
+
+  <must>
+    <value>-o</value>
+    <action>output</action>
+  </must>
+
+  <must>
+    <value>-dumpbase</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>-auxbase</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>-fstack-protector</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>-Wformat</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>-Wformat-security</value>
+    <action>consume_1</action>
+  </must>
+
+  <may>
+    <action>source</action>
+  </may>
+
+  <may>
+    <action>tune</action>
+  </may>
+
+  <may>
+    <action>arch</action>
+  </may>
+</scanner>
