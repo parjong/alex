@@ -19,7 +19,7 @@ std::function<Ret (Args)> wrap(Ret (*p)(Args))
 template <typename T, typename Callable>
 auto operator|(T &&v, Callable &&f) -> decltype(f(v))
 {
-  return std::forward<Callable>(f)(v);
+  return std::forward<Callable>(f)(std::forward<T>(v));
 }
 
 #endif // __FIPE_H__
