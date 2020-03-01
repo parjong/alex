@@ -1,0 +1,23 @@
+# HOWTO: Implement a Python Application
+function invoke()
+{
+  # import "python-app-support"
+
+  echo "Python App Example"
+  
+
+  enable_python "python3"
+
+  "${PYTHON_EXECUTABLE_PATH}" "${APP_CODE_DIR}/app.py"
+  # pyenv(python3.5)
+  #
+  # 1. Create a directory of the following form
+  #   infra/
+  #     pyenv/
+  #       [APP NAME]/
+  #          ALEX_TIMESTAMP
+  #          bin/
+  #          ...
+  #
+  # 2. Export "infra/pyenv/[APP NAME]/bin/python as "PYTHON_EXECUTABLE_PATH"
+}
