@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Let's add SHEBANG for syntax highlighting
+
+echo "Running '${NAME}'"
+echo "CODE_DIR is '${CODE_DIR}'"
+echo "DATA_DIR is '${DATA_DIR}'"
+
+echo "Cat 'FILE'"
+cat "${CODE_DIR}/FILE"
+
+enable_pyenv "python3"
+# enable_shared_python "NAME"
+
+echo "${PYTHON_EXECUTABLE}"
+
+echo "Running my.py"
+"${PYTHON_EXECUTABLE}" "${CODE_DIR}/my.py"

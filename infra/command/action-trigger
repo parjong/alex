@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# HOW TO USE
+#
+# $ ./alex action-trigger [ACTION NAME] ...
+#
+NAME="$1"; shift
+
+# Each action may use the following variables
+CODE_DIR="${ALEX_PROJECT_PATH}/infra/action/${NAME}"
+DATA_DIR="${ALEX_PROJECT_PATH}/infra/.local/action/${NAME}/data"
+
+ENTRY_FILE="${CODE_DIR}/entry"
+
+if [[ ! -f "${ENTRY_FILE}" ]]; then
+  echo "ERROR: Invalid action '${NAME}'"
+  # TODO Show supported actions
+  exit 255
+fi
+
+# Create "DATA_DIR"
+mkdir -p "${DATA_DIR}"
+
+# Supported "API"
+
+# TODO Extract these functions as a reusable library
+function enable_pyenv()
+{
+  echo "USING PYTHON '$1'"
+
+  local VIRTUAL_ENV_DIR="${ALEX_PROJECT_PATH}/infra/.local/action/${NAME}/pyenv"
+
+  if [[ ! -d "${VIRTUAL_ENV_DIR}" ]]; then
+    # TODO Do NOT invoke 'virtualenv' if pyenv is already exists
+    virtualenv -p "$1" "${VIRTUAL_ENV_DIR}"
+  fi
+
+  local REQUIREMENTS_FILE="${CODE_DIR}/requirements.txt"
+
+  if [[ -f "${REQUIREMENTS_FILE}" ]]; then
+    # TODO Check "requirements.txt"
+    "${VIRTUAL_ENV_DIR}/bin/pip" install -qqq -r "${CODE_DIR}/requirements.txt"
+  fi
+
+  # source bin/activate?
+  export PYTHON_EXECUTABLE="${VIRTUAL_ENV_DIR}/bin/python"
+}
+
+source "${ENTRY_FILE}"
