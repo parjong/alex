@@ -1,0 +1,83 @@
+#!/bin/bash
+
+CODE_DIR=$(pwd)
+
+set -e
+
+REQUIREMENTS_FILE="${CODE_DIR}/requirements.txt"
+
+LOCAL_DIR="${CODE_DIR}/.local"
+PYENV_DIR="${LOCAL_DIR}/pyenv"
+PYENV_STAMP="${LOCAL_DIR}/pyenv.stamp"
+
+mkdir -p "${LOCAL_DIR}"
+
+function Usage()
+{
+  echo "Usage: $0 $(basename $(dirname ${BASH_SOURCE[0]})) [COMMAND] ..."
+  echo ""
+  echo "Commands:"
+  echo "  help"
+  echo "  init"
+  echo "  analyze-op"
+}
+
+# TODO Check whether the following executables exist
+# - python3
+# - virtualenv
+function create_environment()
+{
+  # To be sure that "PYENV_DIR" is clean
+  rm -rf "${PYENV_DIR}"
+  command virtualenv -p python3 "${PYENV_DIR}"
+}
+
+function install_dependencies()
+{
+  command "${PYENV_DIR}/bin/pip" install -qqq -r "${REQUIREMENTS_FILE}"
+}
+
+function update_stamp()
+{
+  touch "${PYENV_STAMP}"
+}
+
+COMMAND="$1"; shift
+
+case "${COMMAND}" in
+  "-h"|"--help"|"help")
+    Usage
+    exit 0
+    ;;
+  "init")
+    # Create (Dedicated) Python Environment
+    if [[ ! -f "${PYENV_STAMP}" ]]; then
+      create_environment
+      install_dependencies
+      update_stamp
+    fi
+    ;;
+  "run")
+    if [[ ! -f "${PYENV_STAMP}" ]]; then
+      echo "ERROR: Run 'init' first"
+      exit 255
+    fi
+
+    # Update Python Environment
+    if [[ "${PYENV_STAMP}" -ot "${REQUIREMENTS_FILE}" ]]; then
+      install_dependencies
+      update_stamp
+    fi
+
+    # To use 'toco'
+    export PATH="${PYENV_DIR}/bin:${PATH}"
+
+    # Invoke Python Code
+    "${PYENV_DIR}/bin/python" "${CODE_DIR}/use.py" "$@"
+    ;;
+  *)
+    echo "ERROR: Unknown command '${COMMAND}'"
+    Usage
+    exit 255
+    ;;
+esac
