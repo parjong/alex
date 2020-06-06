@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# pyapp - Manage Python Applications in ALEX
+
+
+# How to use
+#
+# - alex pyapp install <NAME>
+# - alex pyapp invoke <NAME> ...
+# - alex pyapp uninstall <NAME>
+
+# Directory Layout
+#
+# code/
+#   [NAME]/
+#     requirements.txt ; REQUIRED
+#     app.py           ; REQUIRED
+# infra/
+#   pyapp/
+#     [NAME]/
+#       stamp
+#       env/  ; app-local python virtual environment
+#       data/ ; app-local data
+function alex_pyapp_configure()
+{
+  local NAME="$1"
+
+  export ALEX_PYAPP_NAME="${NAME}"
+  export ALEX_PYAPP_DIR="${ALEX_PROJECT_PATH}/code/${NAME}"
+  export ALEX_PYAPP_PKG="${ALEX_PROJECT_PATH}/infra/pyapp/${NAME}"
+
+  export ALEX_PYAPP_STAMP="${ALEX_PYAPP_PKG}/stamp"
+  export ALEX_PYAPP_ENV_DIR="${ALEX_PYAPP_PKG}/env"
+  export ALEX_PYAPP_DATA_DIR="${ALEX_PYAPP_PKG}/data"
+}
+
+function alex_pyapp_install()
+{
+  if [[ -f "${ALEX_PYAPP_STAMP}" ]]; then
+    echo "'${ALEX_PYAPP_NAME}' is already installed"
+    exit 0
+  fi
+
+  echo "[ALEX] Install '${ALEX_PYAPP_NAME}'"
+
+  local REQUIREMENTS_FILE="${ALEX_PYAPP_DIR}/requirements.txt"
+
+  if [[ ! -f "${REQUIREMENTS_FILE}" ]]; then
+    echo "ERROR: requirements.txt does not exist"
+    exit 255
+  fi
+
+  rm -rf "${ALEX_PYAPP_PKG}"
+  mkdir "${ALEX_PYAPP_PKG}"
+
+  mkdir "${ALEX_PYAPP_ENV_DIR}"
+  # Create Python virtual environment and install required packages
+  command virtualenv -p python3 "${ALEX_PYAPP_ENV_DIR}"
+  command "${ALEX_PYAPP_ENV_DIR}/bin/pip" install -r "${REQUIREMENTS_FILE}"
+
+  # Set up data directory
+  mkdir "${ALEX_PYAPP_DATA_DIR}"
+
+  # Create the stamp
+  touch "${ALEX_PYAPP_STAMP}"
+
+  echo "[ALEX] Install '${ALEX_PYAPP_NAME}' - Done"
+}
+
+function alex_pyapp_invoke()
+{
+  if [[ ! -f "${ALEX_PYAPP_STAMP}" ]]; then
+    echo "'${ALEX_PYAPP_NAME}' is not installed yet"
+    exit 255
+  fi
+
+  command "${ALEX_PYAPP_ENV_DIR}/bin/python" "${ALEX_PYAPP_DIR}/app.py" "$@"
+}
+
+function alex_pyapp_uninstall()
+{
+  if [[ ! -f "${ALEX_PYAPP_STAMP}" ]]; then
+    echo "'${ALEX_PYAPP_NAME}' is not installed, yet"
+    exit 0
+  fi
+
+  echo "[ALEX] Uninstall '${ALEX_PYAPP_NAME}'"
+  rm -f "${ALEX_PYAPP_STAMP}"
+  echo "[ALEX] Uninstall '${ALEX_PYAPP_NAME}' - Done"
+}
+
+COMMAND="$1"; shift
+
+case "${COMMAND}" in
+  "install")
+    alex_pyapp_configure "$1"
+    alex_pyapp_install
+    ;;
+  "invoke")
+    alex_pyapp_configure "$1"; shift
+    alex_pyapp_invoke "$@"
+    ;;
+  "uninstall")
+    alex_pyapp_configure "$1"
+    alex_pyapp_uninstall
+    ;;
+  *)
+    echo "ERROR: Unknown command '${COMMAND}'"
+    exit 255
+    ;;
+esac
