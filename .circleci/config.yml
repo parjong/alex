@@ -25,3 +25,16 @@ jobs:
             ./alex configure
             ./alex build
             ./alex test
+  test_tfgex:
+    docker:
+      - image: ubuntu:16.04
+    steps:
+      - run:
+          command: |
+            apt update -y
+            apt install -y python3 python-virtualenv
+      - checkout
+      - run:
+          command: |
+            ./alex pyapp install tfgex-1.13.2
+            ./alex pyapp invoke tfgex-1.13.2 --output-prefix A --script code/tfgex-1.13.2/samples/add/export_tflite.tfges code/tfgex-1.13.2/samples/add/sample.tfg
