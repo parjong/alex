@@ -25,3 +25,32 @@ jobs:
             ./alex configure
             ./alex build
             ./alex test
+  test_tfgex:
+    docker:
+      - image: ubuntu:16.04
+    steps:
+      - run:
+          command: |
+            apt update -y
+            apt install -y python python-virtualenv
+      - checkout
+      - run:
+          command: |
+            cat > sample.tfg <<EOF
+            import tensorflow as tf
+
+            lhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
+            rhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
+            out_ = tf.math.add(lhs_, rhs_)
+
+            inputs = [lhs_, rhs_]
+            outputs = [out_]
+            EOF
+
+            cat > sample.tfges <<EOF
+            configure('tflite')
+            export()
+            EOF
+
+            ./alex pyapp install tfgex-1.13.2
+            ./alex pyapp invoke tfgex-1.13.2 --output-prefix sample --script sample.tfges sample.tfg
