@@ -3,13 +3,24 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include <cleo/Runner.h>
+#include <cleo/AtomApp.h>
+#include <cleo/SelectorApp.h>
+#include <cleo/HelpSupport.h>
+
 #include <map>
+#include <set>
 #include <string>
 
 #include <iostream>
 
 // TODO Implement "test"
-int decode(int, const char * const *)
+struct DecodeApp final : public cleo::AtomApp
+{
+  int run(const cleo::Args *) const final;
+};
+
+int DecodeApp::run(const cleo::Args *) const
 {
   caffe::NetParameter net;
 
@@ -31,7 +42,12 @@ int decode(int, const char * const *)
   return 0;
 }
 
-int encode(int, const char * const *)
+struct EncodeApp final : public cleo::AtomApp
+{
+  int run(const cleo::Args *) const final;
+};
+
+int EncodeApp::run(const cleo::Args *) const
 {
   caffe::NetParameter net;
 
@@ -54,21 +70,11 @@ int encode(int, const char * const *)
 
 int main(int argc, char **argv)
 {
-  std::map<std::string, int (*)(int, const char * const *)> commands;
+  cleo::SelectorApp app;
 
-  commands["decode"] = decode;
-  commands["encode"] = encode;
+  app.command("decode").entry<DecodeApp>();
+  app.command("encode").entry<EncodeApp>();
+  app.command("help").entry<cleo::HelpCommand>();
 
-  if (argc < 2)
-  {
-    // TODO Show help message
-    std::cerr << "ERROR: No command found" << std::endl;
-    return -1;
-  }
-
-  std::string command{argv[1]};
-
-  // TODO Check whether 'command' is valid or not
-  auto func = commands.at(command);
-  return func(0, nullptr);;
+  return cleo::run(app).as("caffekit").with(argc, argv);
 }
