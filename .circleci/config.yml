@@ -54,3 +54,10 @@ jobs:
 
             ./alex pyapp install tfgex-1.13.2
             ./alex pyapp invoke tfgex-1.13.2 --output-prefix sample --script sample.tfges sample.tfg
+      - run:
+          command: |
+            ./alex pyapp install tfgex-1.13.2
+            ./alex pyapp invoke tfgex-1.13.2 \
+              --output-prefix A \
+              --script code/tfgex-1.13.2/samples/add/export_tflite.tfges \
+              code/tfgex-1.13.2/samples/add/sample.tfg
