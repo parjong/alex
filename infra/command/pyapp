@@ -74,6 +74,7 @@ function alex_pyapp_invoke()
     exit 255
   fi
 
+  export PATH="${ALEX_PYAPP_ENV_DIR}/bin:${PATH}"
   command "${ALEX_PYAPP_ENV_DIR}/bin/python" "${ALEX_PYAPP_DIR}/app.py" "$@"
 }
 
