@@ -1,0 +1,8 @@
+# ALEX_PYAPP_DIR
+# ALEX_PYAPP_DATA_DIR
+# ALEX_PYAPP_ENV_DIR
+
+function app_test()
+{
+  python -m unittest discover -s "${ALEX_PYAPP_DIR}" -p "test_*.py"
+}

@@ -7,6 +7,7 @@
 #
 # - alex pyapp install <NAME>
 # - alex pyapp invoke <NAME> ...
+# - alex pyapp test <NAME>
 # - alex pyapp uninstall <NAME>
 
 # Directory Layout
@@ -32,6 +33,8 @@ function alex_pyapp_configure()
   export ALEX_PYAPP_STAMP="${ALEX_PYAPP_PKG}/stamp"
   export ALEX_PYAPP_ENV_DIR="${ALEX_PYAPP_PKG}/env"
   export ALEX_PYAPP_DATA_DIR="${ALEX_PYAPP_PKG}/data"
+
+  export PYTHONDONTWRITEBYTECODE=1
 }
 
 function alex_pyapp_install()
@@ -61,6 +64,8 @@ function alex_pyapp_install()
   # Set up data directory
   mkdir "${ALEX_PYAPP_DATA_DIR}"
 
+  # Q. Post install script?
+
   # Create the stamp
   touch "${ALEX_PYAPP_STAMP}"
 
@@ -76,6 +81,23 @@ function alex_pyapp_invoke()
 
   export PATH="${ALEX_PYAPP_ENV_DIR}/bin:${PATH}"
   command "${ALEX_PYAPP_ENV_DIR}/bin/python" "${ALEX_PYAPP_DIR}/app.py" "$@"
+}
+
+function alex_pyapp_test()
+{
+  if [[ ! -f "${ALEX_PYAPP_STAMP}" ]]; then
+    echo "'${ALEX_PYAPP_NAME}' is not installed yet"
+    exit 255
+  fi
+
+  export PATH="${ALEX_PYAPP_ENV_DIR}/bin:${PATH}"
+
+  MANIFEST_PATH="${ALEX_PYAPP_DIR}/app.manifest"
+
+  if [[ -f "${MANIFEST_PATH}" ]]; then
+    source "${MANIFEST_PATH}"
+    app_test
+  fi
 }
 
 function alex_pyapp_uninstall()
@@ -100,6 +122,10 @@ case "${COMMAND}" in
   "invoke")
     alex_pyapp_configure "$1"; shift
     alex_pyapp_invoke "$@"
+    ;;
+  "test")
+    alex_pyapp_configure "$1"; shift
+    alex_pyapp_test "$@"
     ;;
   "uninstall")
     alex_pyapp_configure "$1"
