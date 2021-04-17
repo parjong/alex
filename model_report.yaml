@@ -1,0 +1,101 @@
+{
+ "metadata": {
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5-final"
+  },
+  "orig_nbformat": 2,
+  "kernelspec": {
+   "name": "python3",
+   "display_name": "Python 3.8.5 64-bit",
+   "metadata": {
+    "interpreter": {
+     "hash": "6c28de56ae431e679cbf9409a5ac47db22672b0026dc57f37dfba35f68d36973"
+    }
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2,
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import yaml"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stderr",
+     "text": [
+      "<ipython-input-2-847e0ef6a879>:2: YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. Please read https://msg.pyyaml.org/load for full details.\n  d = yaml.load(f)\n"
+     ]
+    }
+   ],
+   "source": [
+    "with open('/home/parjong/code/alex/model_report.yaml', 'r') as f:\n",
+    "    d = yaml.load(f)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": [
+      "{'scheme': 'A', 'baseline': {'type': 'NTFLITE', 'size': {'value': 123, 'unit': 'B'}}, 'step': {'codegen': {'tool': {'name': 'tv2-compile', 'extra': ['--DSP-quota', '64k'], 'version': '...', 'commit': '...'}, 'exitcode': 0, 'time': {'value': 234, 'unit': 'second'}}}, 'artifact': {'size': {'value': 123, 'unit': 'B'}}, 'memory': {'buffer': {'size': 123, 'unit': 'B'}, 'weight': {'size': 123, 'unit': 'B'}}, 'latency': {'value': 123, 'unit': 'CYCLE', 'environment': '2.3.4.bw32'}, 'distortion': [{'type': 'VALUE', 'detail': {'range': {'expected': {'min': '...', 'max': '...'}, 'obtained': {'min': '...', 'max': '...'}}, 'diff': {'MAX': '...', 'P99': '...', 'P90': '...', 'P50': '...', 'MIN': '...'}}}, {'type': 'TOP-5', 'top': [{'expected': {'index': 3, 'value': 122}, 'obtained': {'index': 3, 'value': 123}}, {'expected': {'index': 3, 'value': 122}, 'obtained': {'index': 3, 'value': 123}}, {'expected': {'index': 3, 'value': 122}, 'obtained': {'index': 3, 'value': 123}}, {'expected': {'index': 3, 'value': 122}, 'obtained': {'index': 3, 'value': 123}}, {'expected': {'index': 3, 'value': 122}, 'obtained': {'index': 3, 'value': 123}}]}]}\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(d)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "output_type": "execute_result",
+     "data": {
+      "text/plain": [
+       "{'value': 123, 'unit': 'CYCLE', 'environment': '2.3.4.bw32'}"
+      ]
+     },
+     "metadata": {},
+     "execution_count": 4
+    }
+   ],
+   "source": [
+    "d['latency']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ]
+}
