@@ -1,0 +1,19 @@
+# How to write a quantization-aware T/F Graph Recipe?
+#
+# References
+# - https://github.com/tensorflow/docs/tree/r1.13/site/en/api_docs/python/tf/quantization
+# - https://github.com/tensorflow/docs/blob/r1.13/site/en/api_docs/python/tf/quantization/fake_quant_with_min_max_args.md
+
+import tensorflow as tf
+
+lhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 2, 2, 3))
+lhs_q_ = tf.fake_quant_with_min_max_args(lhs_, min=0, max=256)
+rhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 2, 2, 3))
+rhs_q_ = tf.fake_quant_with_min_max_args(rhs_, min=-128, max=127)
+out_ = tf.math.add(lhs_q_, rhs_q_)
+out_q_ = tf.fake_quant_with_min_max_args(out_, min=-128, max=256)
+
+# Ordered Graph Inputs
+inputs = [lhs_q_, rhs_q_]
+# Ordered Graph Outputs
+outputs = [out_q_]

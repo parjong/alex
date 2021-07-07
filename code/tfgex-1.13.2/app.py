@@ -16,6 +16,7 @@ args = parser.parse_args()
 # Namespace(output_prefix='...', recipe='...', script='...')
 recipe = args.recipe
 
+<<<<<<< ecedd743fe2abe593b94a10a6c361f72613eddf1
 # Reset TF Graph
 tf.compat.v1.reset_default_graph()
 
@@ -26,6 +27,8 @@ with open(args.recipe, 'r') as recipe:
    exec(recipe.read())
 
 # Set up the runtime environment for TF Graph Export Script
+=======
+>>>>>>> DRAFT: TensorFlow Toolkit
 output_type = None
 output_prefix = args.output_prefix
 output_suffix = None
@@ -36,14 +39,22 @@ def configure(mode):
 
     assert output_type is None
 
+<<<<<<< ecedd743fe2abe593b94a10a6c361f72613eddf1
     # TODO Support more modes
+=======
+    # TODO Extend this!
+>>>>>>> DRAFT: TensorFlow Toolkit
     assert mode is 'tflite'
 
     output_type = 'tflite'
     output_suffix = 'tflite'
 
+<<<<<<< ecedd743fe2abe593b94a10a6c361f72613eddf1
 # TODO Suffix override
 def export():
+=======
+def commit():
+>>>>>>> DRAFT: TensorFlow Toolkit
     global output_type
     global output_suffix
 
@@ -60,10 +71,25 @@ def export():
         # TODO Set default_ranges_stats
         tflite_model = converter.convert()
 
+<<<<<<< ecedd743fe2abe593b94a10a6c361f72613eddf1
+=======
+    # TODO Suffix override
+>>>>>>> DRAFT: TensorFlow Toolkit
     output_path = '{}.{}'.format(output_prefix, output_suffix)
     with open(output_path, 'wb') as tflite:
         tflite.write(tflite_model)
 
+<<<<<<< ecedd743fe2abe593b94a10a6c361f72613eddf1
 # Read and evaluate TF Graph Export Script (.tfges)
+=======
+###
+###
+###
+tf.compat.v1.reset_default_graph()
+
+with open(args.recipe, 'r') as recipe:
+   exec(recipe.read())
+
+>>>>>>> DRAFT: TensorFlow Toolkit
 with open(args.script, 'r') as script:
     exec(script.read())

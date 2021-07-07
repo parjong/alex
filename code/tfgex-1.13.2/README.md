@@ -1,36 +1,67 @@
-# TensorFlow Graph Exporter
+# TensorFlow Graph Recipe Exporter
 
 Given a TF Graph recipe (.tfg), _tfgex_ reads TF Graph Export Script (.tfges) and runs it.
 
 ## Tutorial
 
-### Create a TensorFlow Lite model
-
-The tutorial below shows how to create a TensorFlow Lite model from a TensorFlow Graph recipe.
-
 ```
-$ cat > sample.tfg <<EOF
-import tensorflow as tf
-
-lhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
-rhs_ = tf.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
-out_ = tf.math.add(lhs_, rhs_)
-
-# The above TF Graph has two inputs.
-inputs = [lhs_, rhs_]
-# The above TF Graph has one output.
-outputs = [out_]
-EOF
+$ tfgre-1.13.2 --output-prefix ... --script <path/to/tfges> <path/to/tfg>
 ```
 
+- TensorFlow Graph Recipe (.tfg), and
+- TensorFlow Graph Export Script (.tfges)
+
+### How to create a GraphDef file
+
 ```
-$ cat > sample.tfges <<EOF
+configure('pb')
+export()
+```
+
+### How to create a text GraphDef file
+
+```
+configure('pbtxt')
+export()
+```
+
+### How to create a TFLITE model
+
+Here is the minimal export script to create a TFLITe model
+```
 configure('tflite')
 export()
-EOF
 ```
 
+### How to create a quantized TFLITE model?
+
+```python
+configure('tflite')
+
+set_inference_type('uint8')
+
+# How to set
+# - the range of all the inputs
+# - the range of a speicific input
+# - the range of all intermeidate tensors
+set_range(input_index='0', scale=1.0, zero_point=8)
+
+export()
 ```
-$ ./alex pyapp install tfgex-1.13.2
-$ ./alex pyapp install tfgex-1.13.2 --output-prefix sample --script sample.tfges sample.tfg
+
+## Reference
+
+```
+configure('tflite')
+
+# Update 'inference_input_type'
+input_type('float' or 'uint8') # float is default
+# Update 'inference_type'
+inference_type('float' or 'uint8') # float is default
+
+input_range(index=0, scale=1.0, zero_point=8)
+default_input_range(scale=1.0, zero_point=8)
+default_inference_range(scale=1.0, zero_point=8)
+
+export()
 ```
