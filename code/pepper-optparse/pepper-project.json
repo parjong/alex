@@ -1,0 +1,17 @@
+{
+  "name" : "pepper-optparse",
+  "type" : "pepper-cxx-lib",
+
+  "libs" : [ "log4cxx", "boost_system", "boost_filesystem" ],
+
+  "depends" : [
+    "pepper-logging",
+    "pepper-stream"
+  ],
+
+  "rules" : [
+    { "pat" : "pepper/**/*.test.cpp", "typ" : "test" },
+    { "pat" : "pepper/**/*.cpp", "typ" : "source" },
+    { "pat" : "pepper/**/*.hpp", "typ" : "header" }
+  ]
+}

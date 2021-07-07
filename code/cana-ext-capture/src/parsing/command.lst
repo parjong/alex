@@ -1,0 +1,8 @@
+#ifndef COMMAND
+#error "COMMAND should be defined"
+#endif
+
+// COMMAND(Name, ActionClass)
+COMMAND(stop,     stop)
+COMMAND(skip,     ignore)
+COMMAND(tag,      tag)

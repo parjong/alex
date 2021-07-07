@@ -1,0 +1,35 @@
+Name: libpepper_tokens
+Summary: C/C++ Pepper Library (tokens)
+License: MIT
+
+BuildRequires: gcc
+BuildRequires: gcc-c++
+BuildRequires: make
+BuildRequires: cmake
+BuildRequires: libext_gtest
+BuildRequires: libext_boost
+
+>> Description
+C/C++ In-house Library [Pepper] - Tokens
+>>
+
+>> Build
+cmake -DCMAKE_INSTALL_PREFIX=${RPM_BUILD_ROOT}/usr .
+make
+make test
+>>
+
+>> Install
+make install
+>>
+
+>> Clean
+rm -rf ${RPM_BUILD_ROOT}
+>>
+
+>> Files
+%defattr(-,root,root,-)
+/usr/lib/libpepper-tokens.a
+/usr/include/pepper/tokens/tokens.h
+/usr/include/pepper/tokens/array_tokens.h
+>>

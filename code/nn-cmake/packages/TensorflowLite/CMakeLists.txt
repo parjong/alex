@@ -1,0 +1,22 @@
+set(TF_PATH "${TensorflowSource_DIR}")
+set(TFLITE_PATH "${TensorflowSource_DIR}/tensorflow/contrib/lite")
+
+file(GLOB CORE_SOURCES "${TFLITE_PATH}/*.c" "${TFLITE_PATH}/*.cc")
+file(GLOB CORE_TESTS "${TFLITE_PATH}/*test*.cc")
+list(REMOVE_ITEM CORE_SOURCES ${CORE_TESTS})
+
+file(GLOB_RECURSE KERNEL_SOURCES "${TFLITE_PATH}/kernels/*.cc")
+file(GLOB_RECURSE KERNEL_TESTS "${TFLITE_PATH}/kernels/*test*.cc")
+list(REMOVE_ITEM KERNEL_SOURCES ${KERNEL_TESTS})
+
+add_library(tensorflow-lite ${CORE_SOURCES} ${KERNEL_SOURCES})
+set_target_properties(tensorflow-lite PROPERTIES CXX_STANDARD 11)
+set_target_properties(tensorflow-lite PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(tensorflow-lite PUBLIC ${TensorflowSource_DIR})
+target_link_libraries(tensorflow-lite flatbuffers)
+target_link_libraries(tensorflow-lite eigen)
+target_link_libraries(tensorflow-lite gemmlowp)
+target_link_libraries(tensorflow-lite farmhash)
+target_link_libraries(tensorflow-lite fft2d)
+target_link_libraries(tensorflow-lite pthread)
+target_link_libraries(tensorflow-lite dl)

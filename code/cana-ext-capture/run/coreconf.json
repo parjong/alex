@@ -1,0 +1,6 @@
+{
+  "binders" :
+  {
+    "native" : "native/binder/libcanaext_native.so"
+  }
+}

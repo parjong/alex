@@ -1,0 +1,121 @@
+<actions>
+  <consume>
+    <name>output</name>
+    <offset>2</offset>
+    <consumer>append</consumer>
+  </consume>
+
+  <match>
+    <name>source</name>
+    <regex>([^-].*)</regex>
+    <matcher>append</matcher>
+  </match>
+
+  <consume>
+    <name>consume_1</name>
+    <offset>1</offset>
+  </consume>
+
+  <consume>
+    <name>consume_2</name>
+    <offset>2</offset>    
+  </consume>
+
+  <match>
+    <name>sysroot</name>
+    <regex>--sysroot=.*</regex>
+  </match>
+
+  <match>
+    <name>hash_style</name>
+    <regex>--hash-style=.*</regex>
+  </match>
+
+  <match>
+    <name>libpath</name>
+    <regex>-L.*</regex>
+  </match>
+
+  <match>
+    <name>liblink</name>
+    <regex>-l.+</regex>
+  </match>
+</actions>
+
+<scanner>
+  <must>
+    <value>-lgcc_s</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>--no-as-needed</value>
+    <action>consume_1</action>
+  </must>
+
+
+  <must>
+    <value>--build-id</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>--as-needed</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>-dynamic-linker</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>-z</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>--eh-frame-hdr</value>
+    <action>consume_1</action>
+  </must>
+
+  <must>
+    <value>-m</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>-z</value>
+    <action>consume_2</action>
+  </must>
+
+  <must>
+    <value>--eh-frame-hdr</value>
+    <action>consume_1</action>
+  </must>
+  
+  <must>
+    <value>-o</value>
+    <action>output</action>
+  </must>
+
+  <may>
+    <action>hash_style</action>
+  </may>
+
+  <may>
+    <action>sysroot</action>
+  </may>
+
+  <may>
+    <action>source</action>
+  </may>
+
+  <may>
+    <action>libpath</action>
+  </may>
+
+  <may>
+    <action>liblink</action>
+  </may>
+</scanner>

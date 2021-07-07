@@ -1,0 +1,38 @@
+Name: libpepper_archive
+Summary: C/C++ Pepper Library (archive)
+License: MIT
+
+BuildRequires: gcc
+BuildRequires: gcc-c++
+BuildRequires: make
+BuildRequires: cmake
+BuildRequires: libext_gtest
+
+>> Description
+C/C++ In-house Library [Pepper] - ARCHIVE
+>>
+
+>> Build
+cmake -DCMAKE_INSTALL_PREFIX=${RPM_BUILD_ROOT}/usr .
+make
+make test
+>>
+
+>> Install
+make install
+>>
+
+>> Clean
+rm -rf ${RPM_BUILD_ROOT}
+>>
+
+>> Files
+%defattr(-,root,root,-)
+/usr/lib/libpepper-archive.a
+/usr/include/pepper/archive/archive.decl.h
+/usr/include/pepper/archive/archive.h
+/usr/include/pepper/archive/int.h
+/usr/include/pepper/archive/uint.h
+/usr/include/pepper/archive/util.h
+/usr/include/pepper/archive/vector.h
+>>

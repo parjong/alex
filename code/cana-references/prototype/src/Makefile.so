@@ -1,0 +1,87 @@
+include Makefile.common
+
+#
+# C Compiler
+#
+CC			= gcc
+
+CFLAGS	=
+CFLAGS	+=	-I.
+CFLAGS	+=	-fPIC
+CFLAGS	+=	-shared
+
+#
+# C++ Compiler
+#
+CXX				= g++
+
+CXXFLAGS	=
+CXXFLAGS	+=	$(CFLAGS)
+CXXFLAGS	+= 	-std=c++11
+
+#
+# Linker
+#
+LDFLAGS	=
+
+#
+# Libraries
+# 
+LIBS		=
+LIBS		+=	-ldl
+LIBS		+=	-llog4cxx
+
+#
+# Sources
+#
+CC_SRC	= 
+CC_SRC	+=	base/debug-tools.cc
+CC_SRC	+=	base/arg-data.cc
+CC_SRC	+=	base/env-data.cc
+CC_SRC	+=	base/distrib-data.cc
+CC_SRC	+=	plugin/abstract_system.cc
+CC_SRC	+=	plugin/checker.cc
+CC_SRC	+=	plugin/actor.cc
+CC_SRC	+=	plugin/manager.cc
+CC_SRC	+=	plugin/init.cc
+CC_SRC	+=	plugin/checker/basename.cc
+CC_SRC	+=	plugin/actor/gcc.cc
+CC_SRC	+=	monitor/lib/api.cc
+CC_SRC	+=	monitor/lib/exec-tools.cc
+CC_SRC	+=	monitor/lib/filename-tools.cc
+CC_SRC	+=	monitor/lib/linux-system.cc
+CC_SRC	+=	monitor/lib/wrap.cc
+CC_SRC	+=	monitor/lib/lib.cc
+
+#
+# Objects
+#
+OBJS		= 
+OBJS		+=	$(CC_SRC:.cc=.o)
+
+#
+#	Output 
+#
+BUILT			= lib.so
+INSTALLED	=	$(OUTDIR)/lib/$(BUILT)
+
+#
+# 
+#
+all : build
+
+build : clean $(BUILT)
+
+clean:
+	rm -rf $(OBJS)
+	rm -rf $(BUILT)
+
+$(BUILT) : $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(BUILT) $(OBJS) $(LIBS)
+
+install: 
+	mkdir -p $(dir $(INSTALLED)); cp $(BUILT) $(INSTALLED)
+
+.SUFFIXES : .cc .o
+.cc.o:
+	$(CXX) $(CXXFLAGS) -o $@ -c $<

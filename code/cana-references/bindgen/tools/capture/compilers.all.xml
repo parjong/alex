@@ -1,0 +1,14 @@
+<item>
+  <path>/usr/lib/gcc/x86_64-linux-gnu/4.8/cc1</path>
+  <config>gcc.xml</config>
+</item>
+
+<item>
+  <path>/usr/bin/as</path>
+  <config>as.xml</config>
+</item>
+
+<item>
+  <path>/usr/bin/ld.bfd</path>
+  <config>ld.xml</config>
+</itme>

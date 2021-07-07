@@ -1,0 +1,6 @@
+{
+  "apps" :
+  {
+    "native_echo" : { "type" : "native",  "base" : "native/apps/echo" }
+  }
+}

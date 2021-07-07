@@ -1,0 +1,6 @@
+{
+  "apps" :
+  {
+    "capture" : { "type" : "native", "base" : "app" }
+  }
+}
