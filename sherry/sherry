@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# sherry [OPTION] [COMMAND]
+#
+# SUPPORTED OPTIONS
+#
+#  --ws <path/to/directory> (mandatory)     [TO BE ADDED]
+#    SHOULD BE
+#  --env <path/to/env> (optional, repeated) [TO BE ADDED]
+#
+# sherry [OPTION] play your.sce
+#
+# Play one scenario
+#
+# sherry [OPTION] compose fst.sce 2nd.sce ... [TO BE ADDED]
+#
+# Compose multiple scenarios and play it
+#
+# sherry [OPTION] play-all [OPTION] <path/to/collection> [TO BE ADDED]
+#
+# Play all the scenarios in a given collection one by one.
+#
+# HOW TO WRITE A SCENARIO
+#
+# SUMMARY="..."
+#
+# function play()
+# {
+#   # Write your scenario here!
+#   sherry_fail()
+#   sherry_oaky()
+# }
+#
+#
+COMMAND="$1"; shift
+
+function sherry_okay()
+{
+  echo "STATUS='OKAY'" > "$SHERRY_STAGE/sherry.status"
+  exit 0
+}
+
+function sherry_fail()
+{
+  echo "STATUS='FAIL'" > "$SHERRY_STAGE/sherry.status"
+  # TODO RECORD REASON
+  exit 255
+}
+
+# TODO GET THIS AS OPTION
+SHERRY_WORKSPACE=$PWD
+
+case $COMMAND in
+  "play")
+    SHERRY_STAGE="$SHERRY_WORKSPACE"
+
+    # PWD -> WORKSPACE/data
+    # PWD ->
+    # SHERRY_SCE_FILE=<absoluate/path/to/sce/file>
+    # SHERRY_SCE_DIR
+    #
+    # SHERRY_SCE_FILE="/a/b/c.sce"
+    # SHERRY_SCE_DIR="/a/b"
+
+    SCE_FILE=$(realpath $1)
+    SCE_DIR=$(dirname $SCE_FILE)
+    echo "Play!"
+
+    source $SCE_FILE
+
+    echo "$SUMMARY"
+
+    # TODO CREATE A FRESH DIRECTORY
+    (
+      # TODO FIX THIS
+      rm -rf local
+      mkdir local
+      cd local
+      play
+    )
+
+    echo "$PWD"
+
+    cat $SHERRY_STAGE/sherry.status
+    echo "DONE"
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND"
+    exit 1
+    ;;
+esac
