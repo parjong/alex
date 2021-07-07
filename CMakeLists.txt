@@ -9,7 +9,7 @@ set(ALEX_OVERLAY_DIR "${ALEX_PROJECT_BINARY_DIR}/overlay" CACHE INTERNAL "overla
 include(infra/cmake/alex.cmake)
 
 # Set standard C++ 11 (without extension) as the default configuration
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
