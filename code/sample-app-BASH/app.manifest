@@ -1,0 +1,7 @@
+function invoke()
+{
+  echo "BASH App Example"
+
+  echo "App takes as input '$@'"
+  cat "${APP_CODE_DIR}/app.txt"
+}

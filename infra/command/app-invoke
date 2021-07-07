@@ -11,6 +11,23 @@ APP_CODE_DIR="${ALEX_PROJECT_PATH}/code/${APP_NAME}"
 # TODO Set "APP_DATA_DIR"
 # - APP_DATA_DIR points to a storage dedicated to each application
 
+#
+# Python App Support
+#
+# TODO Make this as an "orb"
+function enable_python()
+{
+  echo "WARNING!! Not implemented yet"
+  local PYTHON_VER=$1  
+  # pyenv(python3)
+  # pyenv(ptthon3.5)
+  export PYTHON_EXECUTABLE_PATH=$(which "${PYTHON_VER}")
+  echo "PYTHON_VER: ${PYTHON_VER}"
+  echo "PYTHON_EXECUTABLE_PATH: ${PYTHON_EXECUTABLE_PATH}"
+}
+
+# The code below implements "Alex Application Loader"
+
 # TODO Check whether "app.manifest" exists or not
 source "${APP_CODE_DIR}/app.manifest"
 
