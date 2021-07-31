@@ -1,0 +1,6 @@
+# SCHEMA decides the format of .applet file.
+#
+# SCHEMA="<DOMAIN>:r<MAJOR>.<MINOR>"
+#
+# Each domain manages its own versioning poilicy
+SCHEMA="python3:r1.0"

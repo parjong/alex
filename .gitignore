@@ -3,3 +3,4 @@
 
 # Allow users to put their own Makefile at the top-level directory
 /Makefile
+/applet-registry
