@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Alex Applet Domain Test Framework
+#
+# The goal of this test is to ensure that each domain manager correctly implements
+# basic functionalities.
+#
+# HOW TO USE
+#
+# test-domain <DOMAIN NAME> <path/to/sample/applet>
+
+readonly SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ 
+readonly DOMAIN_NAME="$1"
+readonly APPLET_PATH="$2"
+readonly APPLET_NAME=$(basename $APPLET_PATH)
+
+export WORKSPACE_DIR=$(mktemp -d)
+function cleanup()
+{
+  # TODO Preserve workspace on failure
+  rm -rf "$WORKSPACE_DIR"
+}
+trap "cleanup" EXIT
+export ALEX_APPLET_REGISTRY="$WORKSPACE_DIR/registry"
+
+set -eo pipefail
+
+echo ">>> Install the applet at '$APPLET_PATH'"
+${BASH} -eo pipefail "$SELF_DIR/manage" install "$APPLET_PATH" 
+
+echo ">>> Run the applet after install"
+${BASH} -eo pipefail "$SELF_DIR/manage" run "$APPLET_NAME" 
+
+echo ">>> Run the applet after update"
+${BASH} -eo pipefail "$SELF_DIR/manage" update "$APPLET_NAME" 
+${BASH} -eo pipefail "$SELF_DIR/manage" run "$APPLET_NAME" 
+
+echo ">>> Uninstall the applet"
+${BASH} -eo pipefail "$SELF_DIR/manage" uninstall "$APPLET_NAME" 
+
+echo ">>> Done"

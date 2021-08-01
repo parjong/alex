@@ -1,0 +1,146 @@
+#!/bin/bash
+
+readonly APPLET_ENTRY_FILENAME="alex.py"
+
+# TODO Extract this as orb
+function ensure_variable()
+{
+  local NAME="$1"
+  # From Section 3.5.3 in BASH Reference Manual [1]
+  #
+  # [1] https://www.gnu.org/software/bash/manual/html_node/index.html
+  local VALUE="${!NAME}"
+
+  if [[ -z $VALUE ]]; then
+    echo "error: missing variable: $NAME"
+    exit 255
+  fi
+}
+
+# APPLET_DATA_DIR layout
+function venv_stamp_in_applet_data_dir()
+{
+  echo "$1/venv.stamp"
+}
+
+function venv_dir_in_applet_data_dir()
+{
+  echo "$1/venv"
+}
+
+# 'init' COMMAND
+function applet_init()
+{
+  ensure_variable "APPLET_NAME"
+
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  ensure_variable "APPLET_REV_MAJOR"
+  ensure_variable "APPLET_REV_MINOR"
+
+  local VENV_STAMP=$(venv_stamp_in_applet_data_dir $APPLET_DATA_DIR)
+  local VENV_DIR=$(venv_dir_in_applet_data_dir $APPLET_DATA_DIR)
+
+  local APPLET_ENTRY_PATH="$APPLET_CODE_DIR/$APPLET_ENTRY_FILENAME"
+
+  if [[ ! -f "$APPLET_ENTRY_PATH" ]]; then
+    echo "error: missing entry: '$APPLET_ENTRY_FILENAME' does not exist"
+    exit 255
+  fi
+
+  # Revision-specific check
+  local REV="$APPLET_REV_MAJOR.$APPLET_REV_MINOR"
+
+  case "$REV" in
+    "1.0")
+      # DO NOTHING
+      ;;
+    *)
+      echo "error: unknown revision: $REV"
+      exit 255
+  esac
+
+  # NOTE This line explains why this domain is "python3" domain (not "python" domain)
+  # TODO Allow override of python
+  command python3 -m venv "$VENV_DIR"
+
+  REQUIREMENTS_PATH="$APPLET_CODE_DIR/requirements.txt"
+
+  if [[ -f $REQUIREMENTS_PATH ]]; then
+    # requirements.txt is optional
+    "$VENV_DIR/bin/pip" install -r "$REQUIREMENTS_PATH"
+  fi
+
+  touch "$VENV_STAMP"
+}
+
+# 'run' COMMAND
+function applet_run()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  local VENV_STAMP=$(venv_stamp_in_applet_data_dir $APPLET_DATA_DIR)
+  local VENV_DIR=$(venv_dir_in_applet_data_dir $APPLET_DATA_DIR)
+
+  local APPLET_ENTRY_PATH="$APPLET_CODE_DIR/$APPLET_ENTRY_FILENAME"
+
+  if [[ ! -f $APPLET_ENTRY_PATH ]]; then
+    echo "error: missing entry: '$APPLET_ENTRY_PATH' does not exist"
+    exit 255
+  fi
+
+  local REQUIREMENTS_PATH="$APPLET_CODE_DIR/requirements.txt"
+
+  # Check requirement.txt timestamp
+  if [[ -f $REQUIREMENTS_PATH ]]; then
+    if [[ $VENV_STAMP -ot $REQUIREMENTS_PATH ]]; then
+      echo "error: outdated virtual environment: update '$APPLET_NAME'"
+      exit 255
+    fi
+  fi
+
+  "$VENV_DIR/bin/python3" "$APPLET_ENTRY_PATH" "$@"
+}
+
+# 'update' COMMAND
+function applet_update()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  local VENV_STAMP=$(venv_stamp_in_applet_data_dir $APPLET_DATA_DIR)
+  local VENV_DIR=$(venv_dir_in_applet_data_dir $APPLET_DATA_DIR)
+
+  local REQUIREMENTS_PATH="$APPLET_CODE_DIR/requirements.txt"
+
+  if [[ -f $REQUIREMENTS_PATH ]]; then
+    "$VENV_DIR/bin/pip" install -U -r $REQUIREMENTS_PATH
+  fi
+
+  touch "$VENV_STAMP"
+}
+
+COMMAND="$1"; shift
+case $COMMAND in
+  init)
+    applet_init
+    ;;
+  run)
+    applet_run
+    ;;
+  update)
+    applet_update
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND"
+    exit 255
+    ;;
+esac
