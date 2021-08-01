@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -eo pipefail
+
+# From BASH Reference Manual
+#
+# Section 4.2 Bash Builtin Commands - source
+#
+# A synonym for . (see Bourne Shell Builtins).
+#
+# Section 4.1 Bourne Shell Builtins - . (a period)
+# 
+# Read and execute commands from the filename argument in the current shell context.
+source "$ALEX_PROJECT_PATH/infra/applet/manage" "$@"

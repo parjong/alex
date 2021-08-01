@@ -10,10 +10,11 @@
 #
 # This parameter is effective only for 'install' command
 
-readonly APPLET_REGISTRY_DIR=${ALEX_APPLET_REGISTRY:="$SELF_DIR/installed"}
-
 readonly SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly MANIFEST_FILENAME="alex.applet"
+
+# WARNING! Declare APPLET_REGISTRY_DIR after SELF_DIR
+readonly APPLET_REGISTRY_DIR=${ALEX_APPLET_REGISTRY:="$SELF_DIR/installed"}
 
 # read_conf <path/to/file> <VARIABLE NAME>
 # TODO Extract this helper as orb
