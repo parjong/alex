@@ -1,0 +1,274 @@
+#!/bin/bash
+#
+# Alex Applet Manager
+#
+# Parameter: ALEX_APPLET_REGISTRY
+#
+# This parameter is effective for every command.
+#
+# Parameter: ALEX_APPLET_DOMAIN_REGISTRY
+#
+# This parameter is effective only for 'install' command
+
+readonly APPLET_REGISTRY_DIR=${ALEX_APPLET_REGISTRY:="$SELF_DIR/installed"}
+
+readonly SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly MANIFEST_FILENAME="alex.applet"
+
+# read_conf <path/to/file> <VARIABLE NAME>
+# TODO Extract this helper as orb
+function read_conf()
+{
+  local FILE="$1"
+  local VAR="$2"
+
+  source "$FILE"
+
+  echo ${!VAR}
+}
+
+# resolve_dirpath <path/to/some/dir>
+#
+# TODO Extract this helper as orb
+function resolve_dirpath()
+{
+  local TARGET_PATH=$1
+
+  if [[ ! -d $TARGET_PATH ]]; then
+    exit 255
+  fi
+
+  echo $(cd "$TARGET_PATH" && pwd)
+}
+
+function applet_stamp_path_of()
+{
+  local APPLET_NAME="$1"
+  echo "$APPLET_REGISTRY_DIR/$APPLET_NAME.stamp"
+}
+
+function invoke_domain_manager()
+{
+  local DOMAIN_REGISTRY_DIR="$1"; shift
+  local DOMAIN_NAME="$1"; shift
+
+  # Section 5.2 Bash Variables in BASH Reference Manual says that BASH points to
+  # the full pathname used to execute the current instance of Bash.
+  #
+  # DESIGN NOTE: Why this line uses $BASH instead of builtin 'source'
+  #
+  # To minimize the interference of 'domain manager' implementation.
+  #
+  # 'source' inherits the current shell context, and thus all the local changes are visiable
+  # to callee.
+  #
+  # For example, it is impossible to update shell variables from domain manager if they are
+  # marked as "readonly" in this file.
+  "$BASH" -eo pipefail "$DOMAIN_REGISTRY_DIR/$DOMAIN_NAME/manage" "$@"
+}
+
+function applet_install()
+{
+  # TODO Parse command-line arguments
+  # TODO Allow users to override NAME with option (--name [NAME])
+  local TARGET_NAME=""
+  local TARGET_DIR="$1"
+
+  if [[ -z $TARGET_NAME ]]; then
+    # Use dirname by default
+    TARGET_NAME=$(basename $TARGET_DIR)
+  fi
+
+  if [[ ! -e $TARGET_DIR ]]; then
+    echo "error: invalid path: '$TARGET_DIR' does not exist"
+    exit 255
+  fi
+
+  if [[ ! -d $TARGET_DIR ]]; then
+    echo "error: invalid path: '$TARGET_DIR' is not a directory"
+    exit 255
+  fi
+
+  local TARGET_MANIFEST_PATH="$TARGET_DIR/$MANIFEST_FILENAME"
+
+  if [[ ! -f $TARGET_MANIFEST_PATH ]]; then
+    echo "error: missing manifest: '$TARGET_DIR' does not include '$MANIFEST_FILENAME'"
+    exit 255
+  fi
+
+  function read_manifest()
+  {
+    read_conf "$TARGET_MANIFEST_PATH" "$1"
+  }
+
+  local TARGET_SCHEMA=$(read_manifest "SCHEMA")
+
+  if [[ -z $TARGET_SCHEMA ]]; then
+    echo "error: invalid manifest: 'SCHEMA' is missing"
+    exit 255
+  fi
+
+  # Section 3.5.3 Shell Parameter Expansion in BASH Reference Manual
+  #
+  # ${parameter:=word}
+  #
+  # If parameter is unset or null, the expansion of word is assigned to parameter.
+  # ...
+  #
+  # ${parameter#word}
+  # ${parameter##word}
+  #
+  # ... If the pattern matches the beginning of the expanded value of parameter,
+  # then the result of the expansion is the expanded value of parameter with the
+  # shortest matching pattern (the ‘#’ case) or the longest matching pattern (the
+  # ‘##’ case) deleted. ...
+  #
+  # ${parameter%word}
+  # ${parameter%%word}
+  #
+  # ... If the pattern matches a trailing portion of the expanded value of parameter,
+  # then the result of the expansion is the value of parameter with the shortest
+  # matching pattern (the ‘%’ case) or the longest matching pattern (the ‘%%’ case)
+  # deleted.
+  #
+  local DOMAIN_REGISTRY_DIR=${ALEX_APPLET_DOMAIN_REGISTRY:="$SELF_DIR/domain"}
+
+  local APPLET_DOMAIN=${TARGET_SCHEMA%:r*}
+  local APPLET_REV=${TARGET_SCHEMA#$APPLET_DOMAIN:r}
+  local APPLET_REV_MAJOR=${APPLET_REV%\.*}
+  local APPLET_REV_MINOR=${APPLET_REV#$APPLET_REV_MAJOR\.}
+
+  local APPLET_NAME="$TARGET_NAME"
+  local APPLET_STAMP_PATH=$(applet_stamp_path_of $APPLET_NAME)
+
+  if [[ -f $APPLET_STAMP_PATH ]]; then
+    echo "error: invalid name: '$APPLET_NAME' is already occupied"
+    exit 255
+  fi
+
+  local APPLET_CODE_DIR=$(resolve_dirpath "$TARGET_DIR")
+  local APPLET_DATA_DIR="$APPLET_REGISTRY_DIR/$APPLET_NAME"
+
+  local APPLET_MANIFEST_PATH="$APPLET_CODE_DIR/$MANIFEST_FILENAME"
+
+  # Create applet-local storage
+  rm -rf "$APPLET_DATA_DIR"
+  mkdir -p "$APPLET_DATA_DIR"
+
+  # Trigger domain manager to initialize 'local storage'
+  export APPLET_NAME
+
+  export APPLET_CODE_DIR
+  export APPLET_DATA_DIR
+
+  # DESIGN NOTE: Why pass MANIFEST_PATH?
+  #
+  # The goal is to isolate code related with 'applet layout' in 'framework code'
+  export APPLET_MANIFEST_PATH
+  export APPLET_REV_MAJOR
+  export APPLET_REV_MINOR
+
+  invoke_domain_manager "$DOMAIN_REGISTRY_DIR" "$APPLET_DOMAIN" init
+
+  # Create .stamp
+  #
+  # The applet frameworks uses this .stamp file for the rest of operations (e.g. run and update)
+  #
+  # The framework needs the following information to detect uncompatible changes
+  # - SCHEMA DOMAIN and VERSION
+  #
+  # The framework needs 'APPLET_CODE_DIR' to invoke it.
+  (
+    echo "MANIFEST_PATH='$APPLET_MANIFEST_PATH'"
+    echo
+    echo "DOMAIN_REGISTRY='$DOMAIN_REGISTRY_DIR'"
+    echo "DOMAIN='$APPLET_DOMAIN'"
+    echo "MAJOR='$APPLET_REV_MAJOR'"
+    echo "MINOR='$APPLET_REV_MINOR'"
+    echo
+    echo "CODE_DIR='$APPLET_CODE_DIR'"
+    echo "DATA_DIR='$APPLET_DATA_DIR'"
+  ) > "$APPLET_STAMP_PATH"
+}
+
+function applet_run()
+{
+  local APPLET_NAME="$1"; shift
+  local APPLET_STAMP_PATH=$(applet_stamp_path_of $APPLET_NAME)
+
+  if [[ ! -f $APPLET_STAMP_PATH ]]; then
+    echo "error: no insatlled applet: $APPLET_NAME"
+    exit 255
+  fi
+
+  function read_stamp()
+  {
+    read_conf "$APPLET_STAMP_PATH" "$1"
+  }
+
+  local DOMAIN_REGISTRY_DIR=$(read_stamp "DOMAIN_REGISTRY")
+  local APPLET_DOMAIN=$(read_stamp "DOMAIN")
+
+  export APPLET_MANIFEST_PATH=$(read_stamp "MANIFEST_PATH")
+  export APPLET_CODE_DIR=$(read_stamp "CODE_DIR")
+  export APPLET_DATA_DIR=$(read_stamp "DATA_DIR")
+
+  invoke_domain_manager "$DOMAIN_REGISTRY_DIR" "$APPLET_DOMAIN" "run" "$@"
+}
+
+function applet_update()
+{
+  local APPLET_NAME="$1"; shift
+  local APPLET_STAMP_PATH=$(applet_stamp_path_of $APPLET_NAME)
+
+  if [[ ! -f $APPLET_STAMP_PATH ]]; then
+    echo "error: no insatlled applet: $APPLET_NAME"
+    exit 255
+  fi
+
+  function read_stamp()
+  {
+    read_conf "$APPLET_STAMP_PATH" "$1"
+  }
+
+  local DOMAIN_REGISTRY_DIR=$(read_stamp "DOMAIN_REGISTRY")
+  local APPLET_DOMAIN=$(read_stamp "DOMAIN")
+
+  export APPLET_MANIFEST_PATH=$(read_stamp "MANIFEST_PATH")
+  export APPLET_CODE_DIR=$(read_stamp "CODE_DIR")
+  export APPLET_DATA_DIR=$(read_stamp "DATA_DIR")
+
+  invoke_domain_manager "$DOMAIN_REGISTRY_DIR" "$APPLET_DOMAIN" "update" "$@"
+}
+
+function applet_uninstall()
+{
+  local APPLET_NAME="$1"; shift
+
+  local APPLET_STAMP_PATH=$(applet_stamp_path_of $APPLET_NAME)
+  local APPLET_DATA_DIR=$(read_conf "$APPLET_STAMP_PATH" "DATA_DIR")
+
+  # Remove applet-local storage
+  rm -rf "$APPLET_DATA_DIR"
+  # Remove applet stamp
+  rm -f "$APPLET_STAMP_PATH"
+}
+
+COMMAND="$1"; shift
+case $COMMAND in
+  install)
+    applet_install "$@"
+    ;;
+  run)
+    applet_run "$@"
+    ;;
+  update)
+    applet_update "$@"
+    ;;
+  uninstall)
+    applet_uninstall "$@"
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND"
+    exit 255
+esac

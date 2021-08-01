@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export ALEX_APPLET_DOMAIN_REGISTRY="$TEST_DIR/sample-domain"
+export ALEX_APPLET_REGISTRY="$WORKSPACE_DIR/applet-registry"
+
+export LOG_PATH="$WORKSPACE_DIR/applet.log"
+
+"$BASH" "$SUT_PATH" install "$TEST_DIR/sample-applet"
+
+"$BASH" "$SUT_PATH" update sample-applet
+"$BASH" "$SUT_PATH" run sample-applet
+diff "$LOG_PATH" "$TEST_DIR/sample-applet/MSG"
+
+$BASH "$SUT_PATH" uninstall sample-applet

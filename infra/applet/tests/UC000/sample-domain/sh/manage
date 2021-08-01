@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Sample Domain Manager
+#
+# ---
+
+function ensure_variable()
+{
+  local NAME="$1"
+  # From Section 3.5.3 in BASH Reference Manual [1]
+  #
+  # [1] https://www.gnu.org/software/bash/manual/html_node/index.html
+  local VALUE="${!NAME}"
+
+  if [[ -z $VALUE ]]; then
+    echo "error: missing variable: $NAME"
+    exit 255
+  fi
+}
+
+# 'init' COMMAND
+function applet_init()
+{
+  # init expects that the client (= applet framework) to set the below
+  ensure_variable "APPLET_NAME"
+
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  ensure_variable "APPLET_REV_MAJOR"
+  ensure_variable "APPLET_REV_MINOR"
+
+  # DO NOTHING
+}
+
+# 'run' COMMAND
+function applet_run()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  export APPLET_CODE_DIR
+
+  ${BASH} -eo pipefail "$APPLET_CODE_DIR/alex.sh"
+}
+
+# 'update' COMMAND
+function applet_update()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  # DO NOTHING
+}
+
+COMMAND="$1"; shift
+case $COMMAND in
+  init)
+    applet_init
+    ;;
+  run)
+    applet_run
+    ;;
+  update)
+    applet_update
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND"
+    exit 255
+    ;;
+esac
