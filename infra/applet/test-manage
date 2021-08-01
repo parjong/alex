@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Alex Applet Framework Test Manager
+#
+# HOW TO USE
+#
+# test-manage <path/to/test>
+
+readonly TEST_NAME="$1"
+
+readonly SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# SUT = Script Under Testing
+export SUT_PATH="$SELF_DIR/manage"
+export TEST_DIR=$(realpath $TEST_NAME)
+export WORKSPACE_DIR=$(mktemp -d)
+function cleanup()
+{
+  # TODO Preserve workspace on failure
+  rm -rf "$WORKSPACE_DIR"
+}
+trap "cleanup" EXIT
+
+echo "$TEST_NAME: BEGIN"
+
+${BASH} -eo pipefail "$TEST_DIR/test.entry"
+EXITCODE=$?
+
+echo -n "$TEST_NAME: "
+if [[ $? -eq 0 ]]; then
+  echo "PASSED"
+else
+  echo "FAILED"
+fi
+
+exit $EXITCODE

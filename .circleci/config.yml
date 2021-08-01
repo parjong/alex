@@ -25,6 +25,23 @@ jobs:
             ./alex configure
             ./alex build
             ./alex test
+
+  infra_applet_test:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - run:
+          name: Install Prerequisites
+          command: |
+            apt update -y
+            # TODO Install prerequisites
+      - checkout
+      - run:
+          name: Run framework tests
+          working_directory: infra/applet
+          command: |
+            ./test-manage tests/UC000
+
   test_tfgex:
     docker:
       - image: ubuntu:16.04
@@ -54,3 +71,9 @@ jobs:
 
             ./alex pyapp install tfgex-1.13.2
             ./alex pyapp invoke tfgex-1.13.2 --output-prefix sample --script sample.tfges sample.tfg
+
+workflows:
+  commit_check:
+    jobs:
+      - build
+      - infra_applet_test
