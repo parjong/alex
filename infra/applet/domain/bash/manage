@@ -1,0 +1,105 @@
+#!/bin/bash
+
+readonly APPLET_ENTRY_FILENAME="alex.sh"
+
+# TODO Extract this as orb
+function ensure_variable()
+{
+  local NAME="$1"
+  # From Section 3.5.3 in BASH Reference Manual [1]
+  #
+  # [1] https://www.gnu.org/software/bash/manual/html_node/index.html
+  local VALUE="${!NAME}"
+
+  if [[ -z $VALUE ]]; then
+    echo "error: missing variable: $NAME"
+    exit 255
+  fi
+}
+
+# 'init' COMMAND
+function applet_init()
+{
+  ensure_variable "APPLET_NAME"
+
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  ensure_variable "APPLET_REV_MAJOR"
+  ensure_variable "APPLET_REV_MINOR"
+
+  local APPLET_ENTRY_PATH="$APPLET_CODE_DIR/$APPLET_ENTRY_FILENAME"
+
+  if [[ ! -f "$APPLET_ENTRY_PATH" ]]; then
+    echo "error: missing entry: '$APPLET_ENTRY_FILENAME' does not exist"
+    exit 255
+  fi
+
+  # Revision-specific check
+  local REV="$APPLET_REV_MAJOR.$APPLET_REV_MINOR"
+
+  case "$REV" in
+    "1.0")
+      # DO NOTHING
+      ;;
+    *)
+      echo "error: unknown revision: $REV"
+      exit 255
+  esac
+
+  # To store applet-specific configuration (that persist till the lifetime of this applet ends)
+  mkdir -p "$APPLET_DATA_DIR/conf"
+
+  # Q. Is it necessary to store revision?
+}
+
+# 'run' COMMAND
+function applet_run()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  local APPLET_ENTRY_PATH="$APPLET_CODE_DIR/$APPLET_ENTRY_FILENAME"
+
+  if [[ ! -f $APPLET_ENTRY_PATH ]]; then
+    echo "error: missing entry: '$APPLET_ENTRY_PATH' does not exist"
+    exit 255
+  fi
+
+  export ALEX_APPLET_CODE_DIR="$APPLET_CODE_DIR"
+  export ALEX_APPLET_CONF_DIR="$APPLET_DATA_DIR/conf"
+
+  bash "$APPLET_ENTRY_PATH" "$@"
+}
+
+# 'update' COMMAND
+function applet_update()
+{
+  ensure_variable "APPLET_CODE_DIR"
+  ensure_variable "APPLET_DATA_DIR"
+
+  ensure_variable "APPLET_MANIFEST_PATH"
+
+  # Nothing to do
+}
+
+COMMAND="$1"; shift
+case $COMMAND in
+  init)
+    applet_init
+    ;;
+  run)
+    applet_run
+    ;;
+  update)
+    applet_update
+    ;;
+  *)
+    echo "error: unknown command: $COMMAND"
+    exit 255
+    ;;
+esac
