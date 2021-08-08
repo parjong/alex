@@ -47,6 +47,12 @@ jobs:
           working_directory: infra/applet
           command: |
             ./test-domain python3 domain/python3/samples/r1.0
+      - run:
+          name: Rhe python3 domain tutorial
+          command: |
+            ./alex applet install infra/applet/domain/python3/samples/r1.0
+            ./alex applet run r1.0
+            ./alex applet uninstall r1.0
 
   test_tfgex:
     docker:
