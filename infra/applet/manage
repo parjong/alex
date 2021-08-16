@@ -194,7 +194,7 @@ function applet_install()
 
 function applet_run()
 {
-  local APPLET_NAME="$1"; shift
+  export APPLET_NAME="$1"; shift
   local APPLET_STAMP_PATH=$(applet_stamp_path_of $APPLET_NAME)
 
   if [[ ! -f $APPLET_STAMP_PATH ]]; then

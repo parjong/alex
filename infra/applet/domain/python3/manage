@@ -80,6 +80,8 @@ function applet_init()
 # 'run' COMMAND
 function applet_run()
 {
+  ensure_variable "APPLET_NAME"
+
   ensure_variable "APPLET_CODE_DIR"
   ensure_variable "APPLET_DATA_DIR"
 
@@ -134,7 +136,7 @@ case $COMMAND in
     applet_init
     ;;
   run)
-    applet_run
+    applet_run "$@"
     ;;
   update)
     applet_update
