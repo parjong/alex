@@ -43,6 +43,11 @@ jobs:
           command: |
             ./test-manage tests/UC000
       - run:
+          name: Run bash domain tests
+          working_directory: infra/applet
+          command: |
+            ./test-domain bash domain/bash/samples/r1.0
+      - run:
           name: Run python3 domain tests
           working_directory: infra/applet
           command: |
