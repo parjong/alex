@@ -10,18 +10,21 @@ def print_value_summary(v):
   print(f'  elem.count: {v.elem_count}')
   print(f'  size: {v.byte_size} bytes')
 
+# A MAS model has 'inputs' property, which describes all of its input values.
 for n, value in enumerate(mas.model.inputs):
-  print(f'input {n}:')
+  print(f'model input {n}:')
   print_value_summary(value)
 
-# Data? Global?
+# mcon => model const
 for k in mas.model.mcon_keys:
   mcon_value = mas.model.mcon(k)
-  print(f'mcon {k}:')
+  print(f'model const {k}:')
   print_value_summary(mcon_value)
 
 for layer in mas.model.layers:
+  # A MAS layer describes the computation step.
   print(f'layer {layer.ind}:')
+  # 'op' property describes the type of computation. Its intepretation depends on 'OPSET'.
   print(f'  op: {layer.op}')
   print(f'  attr:')
   for attr_name, attr_value in layer.attr_items:
@@ -33,5 +36,5 @@ for layer in mas.model.layers:
     print(f'  output {layer_output_index} => {layer_output_value.id} {layer_output_value.dims}')
 
 for m, value in enumerate(mas.model.outputs):
-  print(f'output {m}:')
+  print(f'model output {m}:')
   print_value_summary(value)

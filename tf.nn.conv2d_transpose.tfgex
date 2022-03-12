@@ -1,0 +1,21 @@
+import numpy as np
+import tensorflow as tf
+
+FLT_H = 2
+FLT_W = 3
+
+IH = 14
+IW = 15
+IC = 5
+OC = 6
+
+inp = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, IH, IW, IC))
+out = tf.compat.v1.nn.conv2d_transpose(
+  inp, # input
+  np.zeros((FLT_H, FLT_W, OC, IC), dtype=np.float32), # filter
+  (1, IH + (FLT_H - 1), IW + (FLT_W - 1), OC), # output_shape
+  [1, 1, 1, 1], # strides
+)
+
+tfgex_set_inputs(inp)
+tfgex_set_outputs(out)

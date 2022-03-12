@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -eo pipefail
+
+VERBOSE=0
+
+CMDLINE=$(getopt -o 'v' --long 'verbose' -- "$@")
+eval set -- "$CMDLINE"
+
+while true; do
+  TOKEN="$1"; shift
+  case "$TOKEN" in
+    -v|--verbose)
+      VERBOSE=1
+      ;;
+    --)
+      break
+      ;;
+  esac
+done
+
+SCRIPTS=()
+
+SCRIPTS+=("spo/mas/example/enable_logging.INFO.mas")
+if [[ $VERBOSE -ne 0 ]]; then
+  SCRIPTS+=("spo/mas/example/basic/summarize.mas")
+fi
+SCRIPTS+=("spo/mas/example/roofline/compute.Q.mas")
+SCRIPTS+=("spo/mas/example/roofline/compute.W.ONNX.mas")
+
+spo/mas/dev analyze-onnx --model "$1" "${SCRIPTS[@]}"

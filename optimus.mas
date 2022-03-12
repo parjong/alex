@@ -1,0 +1,304 @@
+###
+### Let's implement Optimus on top of mas
+###
+
+"""
+MAS abstracts NN workload in terms of 'Value' and 'Operation'
+
+Optimus | MAS
+---     | ---
+Graph   | Model
+Layer   | Operation
+
+Question. How about 'Value' in MAS..?
+
+---
+
+SISO Operation
+
+Input Value --[Abstract Single Outlet Operation]--> Output Value
+
+SISO Operation Composition
+
+seq: SISO Operation (fst) -> SISO (fst) -> SISO Operation
+
+MISO Operation
+
+v1
+~  => vO
+vN
+
+vi == vj may be same
+
+MISO Operation Composition
+
+seq: [SISO Operation] -> MISO Operation -> MISO Operation
+
+---
+
+     +------+
+vI-->|      |
+ |   | BISO |--> vO
+ +-->|      |
+     +------+
+
+enclose: MISO Operation -> SISO Operation
+
+---
+
+Definition: succ(MAS Model M, OperationGroup OG)
+
+succ(M, OG) denotes a set of operations in M.
+
+Every opertion O in succ(M, OG) SHOULD satisfy all of below properites:
+- O in M
+- O not in OG
+- There exists an operation O' in OG which produces a value that 'O' uses.
+
+def succ(M, OG):
+  candidates = { }
+
+  for each operation O in OG,
+    for each output value V of O,
+      add V's user to candidates
+
+  return candidates - OG
+
+---
+
+TODO Compute memory requirement from 'OG'
+
+1. Compute Output Tile Size
+2. Compute Memory Requirement for a given output tile size
+
+---
+
+Tile = (offset, extent) list
+
+NOTE. offset can be negative (to represent padding area)
+
+GetInputShape : () -> (size) list
+GetInputTileFor : TileSpec(?) -> TileSpec
+
+GetPrepareFootprintFor : TileSpec -> int
+GetComptureFootprintFor : Context -> TileSpec -> int
+
+---
+
+To compute memory requirement, it is necessary to implement backward tile shape inference(?).
+
+Given
+- Single outlet (SO) tensor computation
+- (offset, extent) of outlet, backward tile shape inference
+
+Provide: (offset, extent) of each input
+
+---
+
+Definition: Prepare footprint
+
+TO BE FILLED
+
+Definition: Compute footprint
+
+TO BE FILLED
+
+Observation
+
+Peak Footprint depends on how to interleave prepare/compute steps especailly when
+multiple layers are fused as one.
+
+Let's consider an example with Layer 1 -> Layer 2 fusion.
+
+There are at least two possible realization.
+
+Case 1.
+
+Prepare Layer 1
+Prepare Layer 2
+Compute Layer 1
+Compute Layer 2
+
+Case 2.
+
+Prepare Layer 1
+Compute Layer 1
+Prepare Layer 2
+Compute Layer 2
+
+"""
+
+print('Prototype HaFS in Optimus: towards optimal layer-fusion on deep learning processors')
+print('- See https://dl.acm.org/doi/10.1145/3461648.3463848')
+# NOTE A journal verion 'Optimus: An Operator Fusion Framework for Deep Neural Networks' proposes 'output-to-input' algorithm
+
+# Q. How to handle a graph with multiple outputs?
+
+"""
+### How Optimus Algorithm Works?
+
+Defintion: Graph G
+
+Graph G = (V, E) where V is a set of 'layers'
+
+---
+
+Definition: succ(Graph G, LayerGroup L)
+
+succ(G, Ltemp) denotes a set of nodes in G.
+
+Every node v in succ(G, Ltemp) SHOULD satisfy all of below properties:
+- v in G
+- v not in Ltemp
+- There exists a node u in Ltemp such that edge (v -> u) in G
+
+---
+
+Definition: G is disconnected
+
+A directed acyclic graph G is said to be disconnected if
+there is a pair of nodes u, v in G that are unreachable from
+the undirected version of G.
+
+---
+
+Definition: Graph G - LayerGroup L
+
+Let G be (V, E) and V' be V - L
+
+G - L creates another graph G' = (V', filter(V', E))
+
+filter(V, E) =
+{
+  (s, e) | (s, e) in E, s in V, e in V
+}
+
+---
+
+Algorithm fuse(G, Ltemp, Fcost)
+
+Input 1: G = (V, E)
+Input 2: Ltemp
+> This denotes a partial layer group.
+> Ltemp SHOULD be a subset of V
+> Ltemp SHOULD be connected under G
+Input 3: Cost Function Fcost
+> This abstracts underlying HW. The original paper uses processor configuration acc instead.
+
+Output 1: Optimal Graph Partition P = { Li }
+Output 2: Cost C
+
+---
+
+Algorithm Invariant
+
+Let's assume that fuse(G, Ltemp, Fcost) returns P, C where
+- G = (V, E)
+- P = { Li }
+
+P satisfies all the basic properties of graph partition:
+- V == Union_i Li
+- P is pairwise disjoint
+
+P and C satisfies the following properties additionally:
+- There exists Li that includes Ltemp
+- C == Sum_i Fcost(Li)
+
+---
+
+The body of fuse(G, Ltemp, Fcost):
+
+// NOTE. G may be disconnected
+
+if Ltemp is empty:
+  choose any 'input' node v in G
+  - i.e. the arity of 'v' is 0
+  Ltemp <- { v }
+endif
+
+assert Ltemp is non-empty // FIX ME UNLESS
+
+if P and C are known for (G, Ltemp):
+  return it (dynamic programming)
+endif
+
+// CASE: there is no way to extend Ltemp
+if succ(G, Ltemp) is empty:
+  // NOTE: V - Ltemp may be non-empty
+  // A counter-example: Y-shaped model
+  if G is disconnected:
+    // Find connected componenets from G
+    // TODO: Formaly define the notion of connected componenet under DAG
+    Pcc <- ConnectedComponenet(G)
+
+    for each Li in Pcc:
+      if Li includes Ltemp:
+        Pi, Ci <- Fuse(Li, Ltemp, Fcost)
+      else:
+        // Conjecture. Li and Ltemp has no intersection
+        // Proof. TBA
+        Pi, Ci <- Fuse(Li, {}, Fcost)
+      endif
+    endfor
+  
+    // NOTE. Pi is pairwise disjoint
+    // Why?
+    // 1. Layer groups (Li) in Pcc are pairwise disjoint, and
+    // 2. Each Pi is a partition of Li
+    return Union_i Pi, Sum_i Ci
+  endif // G is disconnected
+
+  // TRUE BASE CASE
+  assert V in G == Ltemp
+  return { Ltemp }, Fcost(Ltemp) 
+endif // succ(G, Ltemp) is empty
+
+// INDUCTIVE CASE
+
+// Let's find the optimal for the rest
+// Here... G - Ltemp may be disconnected
+Prest, Crest <- Fuse(G - Ltemp, 0, Fcost)
+
+// Initialize Lopt/Copt under assumption that Ltemp is in Popt
+Popt <- { Ltemp } 'union' Prest
+Copt <- Crest + Fcost(Ltemp)
+
+// Evalute all possible extensions over Ltemp
+for all layer in succ(G, Stemp):
+  // Ltemp is connected under G. So does Lext
+  Lext <- Ltemp + layer
+
+  // TODO Formally define when a layer group is invalid
+  continue if Lext is INVALID under G (i.e. form a cycle)
+
+  // Find optimal partition that includes Lext
+  Pext, Cext = fuse(G, Lext, Fcost)
+
+  // Update Popt and Copt 
+  if Cext < Copt:    
+    Popt <- Pext
+    Copt <- Cext
+  endif
+endfor
+
+return Popt, Copt
+
+---
+
+Potential Optimization: Cache Fcost
+
+Fcost is pure (assumption).
+
+In other words, Fcost(Li) and Fcost(Lj) are always same if Li == Lj.
+
+If so, it is possible to cache 'cost' value
+
+---
+
+NOTE: How to design Fcost?
+
+Return ideal Q if it is possible to fit Li into on-chip buffer
+Return INF otherwise
+"""
+
+

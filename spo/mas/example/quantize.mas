@@ -1,0 +1,27 @@
+mas_model = model()
+
+# TODO Use 'per operation quantization'
+def quantize(value):
+  value.elem.tname = 'Q8'
+  value.elem.avgbit = 8
+
+# Update model inputs
+model_input_count = mas_model.input_count()
+for n in range(0, model_input_count):
+  model_input_value = mas_model.input_detail(n)
+  quantize(model_input_value)
+
+# Update model constants
+for data_key in mas_model.data_keys():
+  data_value = mas_model.data_detail(data_key)
+  quantize(data_value)
+
+# Update layer outputs
+layer_count = mas_model.layer_count()
+for layer_index in range(0, layer_count):
+  layer = mas_model.layer_detail(layer_index)
+
+  layer_output_count = layer.output_count()
+  for layer_output_index in range(0, layer_output_count):
+    layer_output_value = layer.output_detail(layer_output_index)
+    quantize(layer_output_value)

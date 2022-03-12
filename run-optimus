@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -eo pipefail
+
+VERBOSE=0
+
+CMDLINE=$(getopt -o 'v' --long 'verbose' -- "$@")
+eval set -- "$CMDLINE"
+
+while true; do
+  TOKEN="$1"; shift
+  case "$TOKEN" in
+    -v|--verbose)
+      VERBOSE=1
+      ;;
+    --)
+      break
+      ;;
+  esac
+done
+
+SCRIPTS=()
+
+SCRIPTS+=("spo/mas/example/basic/log.INFO.mas")
+if [[ $VERBOSE -ne 0 ]]; then
+  SCRIPTS+=("spo/mas/example/basic/summarize.mas")
+fi
+SCRIPTS+=("optimus.mas")
+
+spo/mas/dev analyze-tflite --model "$1" "${SCRIPTS[@]}"

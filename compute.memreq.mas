@@ -1,0 +1,73 @@
+from collections import namedtuple
+
+mas = get_mas_session()
+
+# Value ID -> Layer Index
+first_use = { }
+# Value ID -> Layer Index
+last_use = { }
+
+# Compute 'first_use' and 'last_use'
+for layer in mas.model.layers:
+  for value in layer.inputs + layer.outputs:
+    if value.id not in first_use:
+      first_use[value.id] = layer.ind
+    # This update is safe because layer.ind is monotonically increasing
+    last_use[value.id] = layer.ind
+  # for value: END
+# for layer: END
+
+Event = namedtuple('Event', 'birth death')
+
+def create_trace_of_length(size):
+  global Event
+  trace = [ ]
+
+  for n in range(0, size):
+    trace.append(Event(birth=[], death=[]))
+
+  return trace
+# def create_trace: END
+
+# Create trace
+trace = create_trace_of_length(mas.model.layer_count)
+
+# Update trace
+for value_id, layer_ind in first_use.items():
+  trace[layer_ind].birth.append(value_id)
+
+for value_id, layer_ind in last_use.items():
+  trace[layer_ind].death.append(value_id)
+# Update trace: END
+
+def compute_memreq(s) -> int:
+  global mas
+  memreq = 0
+
+  for value_id in s:
+    memreq += mas.model.value(value_id).byte_size
+
+  return memreq
+# def compute_memreq: END
+
+layerwise_memreq = [ ]
+
+active_value_set = set()
+for n, e in enumerate(trace):
+  # Add born values to active_value_set
+  for born_value_id in e.birth:
+    active_value_set.add(born_value_id)
+  # for born_value_id: END
+
+  memreq = compute_memreq(active_value_set)
+  layerwise_memreq.append(memreq)
+
+  # Remove dead values
+  for dead_value_id in e.death:
+    active_value_set.remove(dead_value_id)
+  # for dead_value_id: END
+# for n, e: END
+
+PEAK_MEMREQ = max(layerwise_memreq)
+
+print(f'PEAK_MEMREQ: {PEAK_MEMREQ}')

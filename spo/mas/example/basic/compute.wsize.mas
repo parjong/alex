@@ -1,0 +1,19 @@
+from logging import info
+
+mas = get_mas_session()
+
+used_mcon_set = set()
+
+for layer in mas.model.layers:
+  for layer_input_value in layer.inputs:
+    if not layer_input_value.is_model_const():
+      continue
+    used_mcon_set.add(layer_input_value.id)
+
+wgt_size = 0.0
+
+for wgt_value_id in used_mcon_set:
+  wgt_size += mas.model.value(wgt_value_id).byte_size
+
+info(f'Effetive weight size is {wgt_size} bytes')
+mas.set_attr('basic.wsize', wgt_size)

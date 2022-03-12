@@ -1,0 +1,123 @@
+# Example Importer Output
+#
+# TBD
+# - file extension
+opset: 'TFL'
+
+input:
+- elem:
+    # (Human-readable) type name, optional
+    type: 'FLOAT32'
+    # average bit per element, mandatory
+    #
+    # DESIGN NOTE: Why average?
+    #
+    # The bitwidth of each element may vary under prunning/compression
+    avgbit: 32
+  dims: [1, 244, 244, 3]
+
+# Q. How to express a tensor with weight?
+#
+# For example, tfl.Mean operation takes 'reduction indices' as an input (not attribute).
+data: # weight? const?
+  # 'NAME' ~ 'Value Type(?)' Pair
+  #
+  # To express sharing.
+  CONV_FILTER:
+    elem:
+      type: 'FLOAT32'
+      avgbit: 32
+    dims: [3, 3, 3, 48]
+  CONV_BIAS:
+    elem:
+      type: 'FLOAT32'
+      avgbit: 32
+    dims: [48]
+
+
+# A sequence of steps for computation (in execution order)
+layer:
+- # Q. How to handle TFLITE operator versioning?
+  op: 'CONV_2D'
+
+  # A key-value map (defined for each 'op' under 'opset')
+  # These attributes are necessary to compute the number of operations
+  attr:
+  # Some framework (e.g. Caffe) allows each layer to have embedded weight.
+  # This 'data' section is for such embedded weight
+  data:
+  input:
+  # '!' => Use 'model input' (index denotes 'input index')
+  # - e.g. { from: '!', index: 0 }
+  #
+  # '@' => Use 'data' (index denotes 'data name')
+  # - e.g. { from: '@', index: 'CONF_FILTER' }
+  #
+  # '%' => Use 'layer output' (index denotes 'output index')
+  # - e.g. { from: '%', index: '<layer index>:<output index>' }
+  - { from: 'MI', index: 0 } # The 1st model input
+  - { from: 'MC', index: 'CONV_FILTER' }
+  - { from: 'MC', index: 'CONV_BIAS' }
+
+  # Each 'layer' may **defines** new values, and this 'output' section describes them.
+  output:
+  - elem:
+      type: 'FLOAT32'
+      avgbit: 32
+    dims: [1, 244, 244, 48]
+
+# Q: Is it necessary to distinguish INT32 and FLOAT32 for analysis?
+
+output:
+- { from: 'LO', index: '0:0' }
+
+# Q: Why dedicated data section?
+#
+# This design makes it possible to express weight sharing across layers
+#
+# Let's assume that there is infinite amount of on-chip memory, and a model has shared weight (e.g. LSTM)
+#
+# For each item 'I' in data section:
+#   M1_transfer += sizeof(I)
+#
+# M2_transfer = 0
+#
+# For each layer 'L' in layer section:
+#   For each data 'I' in L:
+#     M2_transfer += sizeof(I)
+#
+# M1_transfer <= M2_transfer in general
+# M1_transfer == M2_transfer if there is no shared weight
+# M1_transfer <  M2_transfer if there is shared weight
+#
+#
+# ADs = { } # Empty set
+# AIs = { } # Empty set
+#
+# For each layer 'L':
+#   for each data 'D' in 'L':
+#     add to 'ADs'
+#   for each input 'I' in 'L':
+#     if 'I' is from 'model input'
+#       add it to 'AIs'
+#     if 'I' is from 'data'
+#       add it to 'ADs'
+#
+# Minimal Data Transfer =
+#   sum([sizeof(D) for D in ADs]) + sum([sizeof(I) for I in AIs]) + sum([sizeof(O) for O in Os])
+
+# EVALUATION
+#
+# It is possible to write a generic (i.e. framework-agnositic) script that analyzes the amount of data transfer for various execution schemes.
+# - Possible execution schemes
+#   - fully fused execution (load input / data once, and store only the output)
+#   - layer-by-layer execution (load/store per each layer)
+#   - layer-by-layer execution with pre-loaded data (load/store per each layer)
+#
+# It is necessary to write a OPS-analyze script per _opset_.
+# - Because each framework (or opset) has a subtle difference in its semantics.
+
+# RISK
+#
+# Q. Is it possible to infer 'output shape' even for ONNX models?
+# A. To be filled
