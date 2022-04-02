@@ -1,0 +1,9 @@
+mas = get_mas_session()
+
+if mas.has_attr('roofline.Q.model.ideal'):
+  Q = mas.get_attr('roofline.Q.model.ideal')
+  print(f'Memory Traffic Q: {Q} bytes')
+
+if mas.has_attr('roofline.W.model'):
+  W = mas.get_attr('roofline.W.model')
+  print(f'          Work W: {W} OPS')

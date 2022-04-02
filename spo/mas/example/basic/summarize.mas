@@ -1,0 +1,37 @@
+mas = get_mas_session()
+
+print(f'OPSET is {mas.model.opset}')
+
+def print_value_summary(v):
+  print(f'  elem:')
+  print(f'    type: {v.elem.tname}')
+  print(f'    avgbit: {v.elem.avgbit}')
+  print(f'  dims: {v.dims}')
+  print(f'  elem.count: {v.elem_count}')
+  print(f'  size: {v.byte_size} bytes')
+
+for n, value in enumerate(mas.model.inputs):
+  print(f'input {n}:')
+  print_value_summary(value)
+
+# Data? Global?
+for k in mas.model.mcon_keys:
+  mcon_value = mas.model.mcon(k)
+  print(f'mcon {k}:')
+  print_value_summary(mcon_value)
+
+for layer in mas.model.layers:
+  print(f'layer {layer.ind}:')
+  print(f'  op: {layer.op}')
+  print(f'  attr:')
+  for attr_name, attr_value in layer.attr_items:
+    print(f'    {attr_name}: {attr_value}')
+  for layer_input_index, layer_input_value in enumerate(layer.inputs):
+    print(f'  input {layer_input_index} <= {layer_input_value.id} {layer_input_value.dims}')
+
+  for layer_output_index, layer_output_value in enumerate(layer.outputs):
+    print(f'  output {layer_output_index} => {layer_output_value.id} {layer_output_value.dims}')
+
+for m, value in enumerate(mas.model.outputs):
+  print(f'output {m}:')
+  print_value_summary(value)
