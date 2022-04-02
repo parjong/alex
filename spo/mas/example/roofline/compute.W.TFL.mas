@@ -1,0 +1,185 @@
+from logging import warn
+
+# Use this helper for operations without computation (e.g. CONCAT, TRANSPOSE)
+def zero(l):
+  return 0
+
+# Use this helper for operations with complex semantics
+def sophisticated(l):
+  global warn
+  warn(f'OPS from {l.op} is ignored (too complex to compute)')
+  return 0
+
+def unimplemented(l):
+  global warn
+  warn(f'OPS from {l.op} is ignored (not implemented, yet)')
+  return 0
+
+def avgpool2d(l):
+  FLT_H = int(l.attr('FilterHeight'))
+  FLT_W = int(l.attr('FilterWidth'))
+
+  assert l.output_count == 1
+  out_value = l.output(0)
+  assert out_value.rank == 4
+
+  OPS_PER_OUT_ELEM = 0
+  # Accumulate pixels in window
+  OPS_PER_OUT_ELEM += FLT_H * FLT_W
+  # Divide
+  OPS_PER_OUT_ELEM += 1
+
+  return OPS_PER_OUT_ELEM * out_value.elem_count
+
+def conv2d(l):
+  assert l.input_count >= 2
+  assert l.input_count <= 3
+  ifm_value = l.input(0)
+  wgt_value = l.input(1)
+
+  IFM_C = ifm_value.dim(3)
+
+  FLT_H = wgt_value.dim(1)
+  FLT_W = wgt_value.dim(2)
+
+  assert l.output_count == 1
+  out_value = l.output(0)
+
+  assert out_value.rank == 4
+  OFM_N = out_value.dim(0)
+  OFM_H = out_value.dim(1)
+  OFM_W = out_value.dim(2)
+  OFM_C = out_value.dim(3)
+
+  OPS_PER_OUT_ELEM = 0
+  # Accumulate IFM/FLT pixel multiplication
+  OPS_PER_OUT_ELEM += 2 * FLT_H * FLT_W * IFM_C
+  # Add a bias
+  OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
+
+  return OPS_PER_OUT_ELEM * out_value.elem_count
+
+# This assumes that reference deconv2d kernel
+def dconv2d_ref(l):
+  assert l.input_count >= 2
+  assert l.input_count <= 3
+  wgt_value = l.input(1)
+
+  FLT_H = wgt_value.dim(1)
+  FLT_W = wgt_value.dim(2)
+
+  assert l.output_count == 1
+  out_value = l.output(0)
+
+  assert out_value.rank == 4
+  OFM_N = out_value.dim(0)
+  OFM_H = out_value.dim(1)
+  OFM_W = out_value.dim(2)
+  OFM_C = out_value.dim(3)
+
+  OPS_PER_OUT_ELEM = 0
+  # Multiply each IFM/FLT pixel and accumulate
+  OPS_PER_OUT_ELEM += 2 * FLT_H * FLT_W
+  # Add a bias
+  OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
+
+  return OPS_PER_OUT_ELEM * out_value.elem_count
+
+def eltwise_binary(l):
+  assert l.output_count == 1
+  out_value = l.output(0)
+
+  assert l.input_count == 2
+
+  # Run
+  #
+  # acc = op.identity_element (0 for ADD / 1 for MUL)
+  # for each input I:
+  #   acc = op(acc, LHS)
+  #   acc = op(acc, RHS)
+  #
+  OPS_PER_OUT_ELEM = 2
+
+  return OPS_PER_OUT_ELEM * out_value.elem_count
+
+def reduce_mean(l):
+  assert l.input_count >= 1
+  assert l.output_count == 1
+
+  in_value = l.input(0)
+  out_value = l.output(0)
+
+  assert in_value.elem_count >= out_value.elem_count
+
+  # N input elements are reduced as one output element
+  N = in_value.elem_count / out_value.elem_count
+
+  OPS_PER_OUT_ELEM = 0
+  # Accumulate N elemets
+  OPS_PER_OUT_ELEM += N
+  # One division
+  OPS_PER_OUT_ELEM += 1
+
+  return OPS_PER_OUT_ELEM * out_value.elem_count
+
+def fully_connected(l):
+  assert l.input_count in [2, 3]
+  assert l.output_count == 1
+  inp_value = l.input(0)
+  out_value = l.output(0)
+
+  assert inp_value.dim(0) == out_value.dim(0)
+
+  B = inp_value.dim(0)
+  INP_ELEM = inp_value.elem_count / B
+  OUT_ELEM = out_value.elem_count / B
+
+  OPS_PER_OUT_ELEM = 0
+  OPS_PER_OUT_ELEM += 2 * INP_ELEM
+  OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
+
+  # for each BATCH
+  #   for each OUT
+  #     acc = 0
+  #     for each INP
+  #       acc += INP * WGT
+  #     acc += BIAS
+  #
+  # TODO Revisit this definition
+  return B * OUT_ELEM * OPS_PER_OUT_ELEM
+
+# How to compute OPS per each layer
+rules = { }
+
+rules['ADD'] = eltwise_binary
+rules['AVERAGE_POOL_2D'] = avgpool2d
+rules['CONCATENATION'] = zero
+rules['CONV_2D'] = conv2d
+rules['DEPTHWISE_CONV_2D'] = dconv2d_ref
+rules['FULLY_CONNECTED'] = fully_connected
+rules['LOGISTIC'] = sophisticated
+rules['MAX_POOL_2D'] = zero
+rules['MEAN'] = reduce_mean
+rules['MUL'] = eltwise_binary
+rules['PAD'] = zero
+rules['RESHAPE'] = zero
+rules['RESIZE_BILINEAR'] = unimplemented
+rules['SOFTMAX'] = sophisticated
+rules['SQUEEZE'] = zero
+rules['TRANSPOSE'] = zero
+rules['TRANSPOSE_CONV'] = unimplemented
+
+# Analyze model
+mas = get_mas_session()
+assert mas.model.opset.startswith('TFL')
+
+# Iterate each layer
+MODEL_OPS = 0
+
+for layer in mas.model.layers:
+  compute_ops = rules[layer.op]
+  LAYER_OPS = compute_ops(layer)
+  MODEL_OPS += LAYER_OPS
+# for: END
+
+mas.set_attr('roofline.W.model', MODEL_OPS)

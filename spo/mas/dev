@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# What is this script for?
+#
+# This script makes it easy to implement and test 'mas'
+#
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Local Virtual Environment
+LVE_PREFIX="$THIS_DIR/.venv"
+LVE_STAMP="$LVE_PREFIX/STAMP"
+
+set -eo pipefail
+
+function init()
+{
+  # Use python3 as default
+  PYTHON="python3"
+
+  local OPTIONS=$(getopt -o 'p:' --long 'python:' -- "$@")
+  eval set -- "$OPTIONS"
+
+  while true; do
+    TOKEN="$1"; shift
+    case "$TOKEN" in
+      -p|--python)
+        PYTHON="$1"; shift
+        ;;
+      --)
+        break
+        ;;
+    esac
+  done
+
+  if [[ -d "$LVE_PREFIX" ]]; then
+    echo "error: already initialized"
+    echo
+    echo "Type the following command to resolve this problem"
+    echo
+    echo "  rm -rf '$LVE_PREFIX'"
+    echo
+    exit 1
+  fi
+
+  echo "info: initialize virtual environment with '$PYTHON'"
+  virtualenv -p "$PYTHON" "$LVE_PREFIX"
+  "$LVE_PREFIX/bin/pip" install -r "$THIS_DIR/requirements.txt"
+  touch "$LVE_STAMP"
+}
+
+function deinit()
+{
+  rm -rf "$LVE_PREFIX"
+  echo "info: done!"
+}
+
+function invoke_python()
+{
+  if [[ ! -d "$LVE_PREFIX" ]]; then
+    echo "error: virtual environment is not intialized, yet"
+    echo
+    echo "Run 'init' command"
+    echo
+    exit 1
+  fi
+
+  if [[ "$LVE_STAMP" -ot "$THIS_DIR/requirements.txt" ]]; then
+    echo "error: virtual environment is outdated"
+    echo
+    echo "Run 'init' command again"
+    echo
+    exit 1
+  fi
+
+  source "$LVE_PREFIX/bin/activate"
+  # -B => Don't write .pyc files on import.
+  "$LVE_PREFIX/bin/python" -B "$@"
+}
+
+function analyze_tflite()
+{
+  invoke_python "$THIS_DIR/code/analyze-tflite.py" "$@"
+}
+
+function echo_usage()
+{
+  echo "USAGE: dev [COMMAND] ..."
+  echo
+  echo "  init"
+  echo
+  echo "    initialize local environment"
+  echo
+  echo "  deinit"
+  echo
+  echo "    destroy local environment"
+  echo
+  echo "  invoke-python"
+  echo
+  echo "    invoke a python script with local environment"
+  echo
+  echo "  analyze-tflite"
+  echo
+  echo "    analyze a .tflite model with .mas scripts"
+  echo
+  echo "  help"
+  echo
+  echo "    show help message"
+  # POSSIBLE EXTENSIONS
+  #
+  # - update LVE
+  # - build .whl package
+}
+
+if [[ $# -eq 0 ]]; then
+  echo "error: missing command"
+  echo
+  echo_usage
+  echo
+  exit 1
+fi
+
+CMD="$1"; shift
+case $CMD in
+  init)
+    init "$@"
+    ;;
+  deinit)
+    deinit "$@"
+    ;;
+  invoke-python)
+    invoke_python "$@"
+    ;;
+  analyze-tflite)
+    analyze_tflite "$@"
+    ;;
+  help)
+    echo_usage
+    exit 0
+    ;;
+  *)
+    echo "error: unknown command: '$CMD'"
+    echo
+    echo_usage
+    echo
+    exit 1
+esac

@@ -1,0 +1,40 @@
+from logging import info
+
+mas = get_mas_session()
+
+# Compute ideal memory traffic
+#         ~~~~~
+#
+# Q: What does 'ideal' mean?
+#
+# This script computes memory traffic when DEVICE memory is infinite,
+#
+# Whene DEVICE memory is infinite, ideal inference engine is expected to
+# 1. Transfer user input and weight at HOST to DEVICE once
+# 2. Keep layer output in DEVICE
+# 3. Transfer model output to HOST if it is stored at DEVICE.
+#
+# This value serves as 'lower bound' for single-shot inference.
+transferred_value_set = set()
+
+for layer in mas.model.layers:
+  for layer_input_value in layer.inputs:
+    if layer_input_value.is_layer_output():
+      continue
+    # Layer Input incurs 'HOST -> DEVICE' traffic if it is not an output of previous layer.
+    transferred_value_set.add(layer_input_value.id)
+
+for value in mas.model.outputs:
+  if not value.is_layer_output():
+    continue
+  # Model Output from 'Layer Output' incurs 'DEVICE -> HOST' traffic
+  transferred_value_set.add(value.id)
+
+# Iterate transferred_value_set, and accumulate traffic
+memory_traffic = 0.0
+
+for value_id in transferred_value_set:
+  memory_traffic += mas.model.value(value_id).byte_size
+
+info(f'Q (ideal) is {memory_traffic} bytes')
+mas.set_attr('roofline.Q.model.ideal', memory_traffic)
