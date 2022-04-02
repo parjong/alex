@@ -1,0 +1,14 @@
+# Let's explain how to write a .tfgex with an example
+import tensorflow as tf
+
+# A .tfgex scripts is basically a Python script with TensorFlow 1.x API.
+#
+# NOTE Use tf.compat.v1 here to make this .tfgex compatible even with TensorFlow 2.x
+lhs = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
+rhs = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
+out = tf.math.add(lhs, rhs)
+
+# These lines distinguish .tfgex from other Python scripts, which mark
+# the input and output of the TensorFlow graph above.
+tfgex_set_inputs(lhs, rhs)
+tfgex_set_outputs(out)

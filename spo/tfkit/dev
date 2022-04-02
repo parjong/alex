@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# OVERVIEW
+#
+# Let's make it easy to implement and test tfkit!
+#
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+set -eo pipefail
+
+function errmsg_missing_option()
+{
+  echo "error: missing option:" $@
+}
+
+function required()
+{
+  VAR="$1"; shift
+
+  if [[ -z ${!VAR} ]]; then
+    echo $@
+    exit 1
+  fi
+}
+
+function install()
+{
+  # Use python3 as default
+  PYTHON="python3"
+
+  local OPTIONS=$(getopt -o '' --long 'prefix:,with-python:,with-tensorflow:' -- "$@")
+  eval set -- "$OPTIONS"
+
+  while true; do
+    TOKEN="$1"; shift
+    case "$TOKEN" in
+      --prefix)
+        INSTALL_PREFIX="$1"; shift
+        ;;
+      --with-tensorflow)
+        TENSORFLOW_VERSION="$1"; shift
+        ;;
+      --with-python)
+        PYTHON="$1"; shift
+        ;;
+      --)
+        break
+        ;;
+    esac
+  done
+
+  required INSTALL_PREFIX $(errmsg_missing_option '--prefix')
+  required TENSORFLOW_VERSION $(errmsg_missing_option '--with-tensorflow')
+
+  if [[ $# -eq 0 ]]; then
+    # Use default configuration
+    TOOLS_TO_INSTALL=()
+    TOOLS_TO_INSTALL+=("tfgex-compile")
+  else
+    TOOLS_TO_INSTALL=("$@")
+  fi
+
+  # Check 'TOOLS_TO_INSTALL'
+  for T in "${TOOLS_TO_INSTALL[@]}"; do
+    if [[ ! -f "$THIS_DIR/tools/$T/entrypoint.py" ]]; then
+      echo "error: invalid tool: '$T'"
+      exit 1
+    fi
+    echo "info: accepted installation request: '$T'"
+  done
+
+  # Check 'INSTALL_PREFIX'
+  if [[ -e "$INSTALL_PREFIX" ]]; then
+    echo "error: '$INSTALL_PREFIX' already exists"
+    echo
+    echo "Type the following command to resolve this problem"
+    echo
+    echo "  rm -rf '$INSTALL_PREFIX'"
+    echo
+    exit 1
+  fi
+
+  mkdir -p "$INSTALL_PREFIX"
+  function revert()
+  {
+    if [[ $? -ne 0 ]]; then
+      echo "info: installation failure: revert '$INSTALL_PREFIX'"
+      rm -rf "$INSTALL_PREFIX"
+    fi
+  }
+  # DESIGN NOTE: Why EXIT not ERR?
+  #
+  # trap does not work as expected with 'set -e'.
+  trap 'revert' EXIT
+
+  local LVE_RPATH="venv"
+  local LVE_PREFIX="$INSTALL_PREFIX/$LVE_RPATH"
+  local LVE_STAMP_RPATH="STAMP"
+  local LVE_STAMP="$INSTALL_PREFIX/$LVE_STAMP_RPATH"
+
+  echo "info: initialize virtual environment with '$PYTHON'"
+  virtualenv -p "$PYTHON" "$LVE_PREFIX"
+
+  echo "info: install tensorflow '$TENSORFLOW_VERSION'"
+  "$LVE_PREFIX/bin/pip" install "tensorflow==$TENSORFLOW_VERSION"
+
+  # Create a wrapper in 'bin'
+  mkdir -p "$INSTALL_PREFIX/bin"
+  for T in "${TOOLS_TO_INSTALL[@]}"; do
+    TOOL_PREFIX="$THIS_DIR/tools/$T"
+    TOOL_REQ="$TOOL_PREFIX/requirements.txt"
+
+    if [[ -f "$TOOL_REQ" ]]; then
+      echo "info: install requirements specific to '$T'"
+      "$LVE_PREFIX/bin/pip" install -r "$TOOL_REQ"
+    fi
+
+    local TOOL_DRIVER_PATH="$INSTALL_PREFIX/bin/$T"
+    (
+      echo "#!/bin/bash"
+      echo
+      echo 'THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
+      echo
+      echo "if [[ -f \"$TOOL_REQ\" ]]; then"
+      echo "  if [[ \"$TOOL_REQ\" -ot \"\$THIS_DIR/../$LVE_STAMP_RPATH\" ]]; then"
+      echo "    echo 'error: outdated environment: re-install tools'"
+      echo "    exit 1"
+      echo "  fi"
+      echo "fi"
+      echo
+      echo "source \"\$THIS_DIR/../$LVE_RPATH/bin/activate\""
+      echo "python \"$TOOL_PREFIX/entrypoint.py\" \"\$@\""
+    ) > "$TOOL_DRIVER_PATH"
+    chmod +x "$TOOL_DRIVER_PATH"
+  done
+
+  touch "$LVE_STAMP"
+}
+
+function echo_usage()
+{
+  echo "USAGE: dev [COMMAND] ..."
+  echo
+  echo "  install"
+  echo
+  echo "    install tfkit"
+  echo
+  echo "  help"
+  echo
+  echo "    show help message"
+}
+
+if [[ $# -eq 0 ]]; then
+  echo "error: missing command"
+  echo
+  echo_usage
+  echo
+  exit 1
+fi
+
+CMD="$1"; shift
+case $CMD in
+  install)
+    install "$@"
+    ;;
+  help)
+    echo_usage
+    exit 0
+    ;;
+  *)
+    echo "error: unknown command: '$CMD'"
+    echo
+    echo_usage
+    echo
+    exit 1
+esac
