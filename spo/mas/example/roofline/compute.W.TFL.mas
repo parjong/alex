@@ -77,6 +77,38 @@ def dconv2d_ref(l):
 
   return OPS_PER_OUT_ELEM * out_value.elem_count
 
+def tconv2d(l):
+  warn(f'OPS from layer {l.ind} ({l.op}) is not verified, yet')
+  # Input 0 => output_shape
+  # Input 1 => weights
+  # Input 2 => input
+  assert l.input_count == 3
+  assert l.output_count == 1
+  inp_value = l.input(2)
+  wgt_value = l.input(1)
+  out_value = l.output(0)
+
+  assert inp_value.rank == 4
+  assert out_value.rank == 4
+
+  # WGT is [O, H, W, I]
+  assert inp_value.dim(3) == wgt_value.dim(3)
+  assert out_value.dim(3) == wgt_value.dim(0)
+  FLT_H = wgt_value.dim(1)
+  FLT_W = wgt_value.dim(2)
+
+  OUT_C = out_value.dim(3)
+
+  OPS_PER_INP_ELEM = 0
+  # For each IFM pixel:
+  #   For each OFM/FLT pixel pair:
+  #     One multiplication (IFM * FLT)
+  #     One addition (for accumulation)
+  OPS_PER_INP_ELEM += 2 * FLT_H * FLT_W * OUT_C
+  # tfl.TRANSPOSE_CONV has no bias
+
+  return OPS_PER_INP_ELEM * inp_value.elem_count
+
 def eltwise_binary(l):
   assert l.output_count == 1
   out_value = l.output(0)
@@ -159,7 +191,7 @@ rules['RESIZE_BILINEAR'] = unimplemented
 rules['SOFTMAX'] = sophisticated
 rules['SQUEEZE'] = zero
 rules['TRANSPOSE'] = zero
-rules['TRANSPOSE_CONV'] = unimplemented
+rules['TRANSPOSE_CONV'] = tconv2d
 
 # Analyze model
 mas = get_mas_session()
