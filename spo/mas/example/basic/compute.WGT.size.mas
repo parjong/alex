@@ -1,0 +1,18 @@
+mas = get_mas_session()
+
+# Collect effective model constants (a.k.a model weight)
+used_mcon_set = set()
+
+for layer in mas.model.layers:
+  for layer_input_value in layer.inputs:
+    if not layer_input_value.is_model_const():
+      continue
+    used_mcon_set.add(layer_input_value.id)
+
+# Accumulate the size of effective model constants
+wgt_size = 0.0
+
+for wgt_value_id in used_mcon_set:
+  wgt_size += mas.model.value(wgt_value_id).byte_size
+
+mas.set_attr('basic.WGT.size', wgt_size)
