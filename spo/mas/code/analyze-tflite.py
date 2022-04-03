@@ -151,8 +151,10 @@ class ListField:
 
 # 'opschema' abstract TFLITE flatbuffer schema
 #
-# https://github.com/tensorflow/tensorflow/tree/v2.4.0/tensorflow/lite/schema
-# TODO Check Python tflite package version
+# Compatible with the following .fbs specification:
+# > https://github.com/jackwish/tflite/blob/v2.4.0/3rdparty/schema.fbs
+#
+assert tflite.__version__ == '2.4.0'
 
 # Corresponds to 'Pool2DOptions' table
 pool2d_table = [
@@ -225,6 +227,7 @@ opschema['SOFTMAX'] = [
 opschema['SQUEEZE'] = [
   ListField('SqueezeDims')
 ]
+opschema['TRANSPOSE'] = no_field
 opschema['TRANSPOSE_CONV'] = [
   EnumField('Padding', tflite.Padding),
   ScalarField('StrideH'),
