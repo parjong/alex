@@ -181,6 +181,7 @@ rules['CONCATENATION'] = zero
 rules['CONV_2D'] = conv2d
 rules['DEPTHWISE_CONV_2D'] = dconv2d_ref
 rules['FULLY_CONNECTED'] = fully_connected
+rules['LEAKY_RELU'] = unimplemented
 rules['LOGISTIC'] = sophisticated
 rules['MAX_POOL_2D'] = zero
 rules['MEAN'] = reduce_mean

@@ -208,6 +208,9 @@ opschema['FULLY_CONNECTED'] = [
   ScalarField('KeepNumDims'),
   ScalarField('AsymmetricQuantizeInputs'),
 ]
+opschema['LEAKY_RELU'] = [
+  ScalarField('Alpha'),
+]
 opschema['MAX_POOL_2D'] = pool2d_table
 opschema['MEAN'] = reducer_table
 opschema['MUL'] = [
