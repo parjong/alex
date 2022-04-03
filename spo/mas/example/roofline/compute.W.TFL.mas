@@ -46,10 +46,6 @@ def conv2d(l):
   out_value = l.output(0)
 
   assert out_value.rank == 4
-  OFM_N = out_value.dim(0)
-  OFM_H = out_value.dim(1)
-  OFM_W = out_value.dim(2)
-  OFM_C = out_value.dim(3)
 
   OPS_PER_OUT_ELEM = 0
   # Accumulate IFM/FLT pixel multiplication
@@ -72,10 +68,6 @@ def dconv2d_ref(l):
   out_value = l.output(0)
 
   assert out_value.rank == 4
-  OFM_N = out_value.dim(0)
-  OFM_H = out_value.dim(1)
-  OFM_W = out_value.dim(2)
-  OFM_C = out_value.dim(3)
 
   OPS_PER_OUT_ELEM = 0
   # Multiply each IFM/FLT pixel and accumulate
