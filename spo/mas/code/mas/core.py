@@ -163,6 +163,9 @@ class MASTensorEndpoint:
   def byte_size(self):
     return self.elem_count * (self.elem.avgbit / 8)
 
+  def is_model_const(self):
+    return self.id.src == ModelConst
+
   def is_layer_output(self):
     return self.id.src == LayerOutput
 # class MASTensorEndpoint: END
