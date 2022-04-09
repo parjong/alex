@@ -82,6 +82,11 @@ function analyze_tflite()
   invoke_python "$THIS_DIR/code/analyze-tflite.py" "$@"
 }
 
+function analyze_onnx()
+{
+  invoke_python "$THIS_DIR/code/analyze-onnx.py" "$@"
+}
+
 function echo_usage()
 {
   echo "USAGE: dev [COMMAND] ..."
@@ -101,6 +106,10 @@ function echo_usage()
   echo "  analyze-tflite"
   echo
   echo "    analyze a .tflite model with .mas scripts"
+  echo
+  echo "  analyze-onnx"
+  echo
+  echo "    analyze a .onnx model with .mas scripts"
   echo
   echo "  help"
   echo
@@ -132,6 +141,9 @@ case $CMD in
     ;;
   analyze-tflite)
     analyze_tflite "$@"
+    ;;
+  analyze-onnx)
+    analyze_onnx "$@"
     ;;
   help)
     echo_usage
