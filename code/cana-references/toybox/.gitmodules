@@ -1,0 +1,3 @@
+[submodule "llvm"]
+	path = llvm
+	url = http://parjong@parjong.gonetis.com/inhouse-llvm/_inhouse_llvm.git
