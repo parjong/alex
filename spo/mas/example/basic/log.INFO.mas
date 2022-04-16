@@ -1,0 +1,10 @@
+# WARNING!
+#
+# Invoke this .mas script before any other .mas scripts, otherwise logging may not work as expected.
+import logging
+import sys
+
+logging.basicConfig(level=logging.INFO,
+  # Ref: https://docs.python.org/3/library/logging.html#logrecord-attributes
+  format='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s',
+)

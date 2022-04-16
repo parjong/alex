@@ -1,6 +1,6 @@
 # Python Standard Library
 from argparse import ArgumentParser
-from logging import info
+import logging
 from pathlib import Path
 
 # External Library
@@ -9,6 +9,10 @@ import tflite
 # Internal Modules
 from mas.core import LayerOutput, ValueID
 from mas.core import MASElem, MASModel, MASRunner
+from mas.aux import create_driver_logger
+
+# Logger
+logger = create_driver_logger()
 
 # Global Initialization
 options2name = { }
@@ -394,10 +398,16 @@ def read_from(tflite_path, graph_index=None):
 # CLI
 parser = ArgumentParser(description='Analyze .tflite model with .mas scrikpts')
 parser.add_argument('-m', '--model-path', metavar='PATH', required=True, dest='MODEL_PATH')
+parser.add_argument('-v', dest='LOG_LEVEL', action='store_const', const=logging.INFO)
+parser.add_argument('-vv', dest='LOG_LEVEL', action='store_const', const=logging.DEBUG)
 
 args, rest = parser.parse_known_args()
 
-info(f'Load .tflite from {args.MODEL_PATH}')
+if args.LOG_LEVEL is not None:
+  logger.setLevel(args.LOG_LEVEL)
+# if args.LOG_LEVEL: END
+
+logger.info(f'Load "{args.MODEL_PATH}"')
 
 # TODO Permit Graph Selection
 mas_model = read_from(args.MODEL_PATH, graph_index=0)

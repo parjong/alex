@@ -1,6 +1,6 @@
 # Python Standard Library
 from argparse import ArgumentParser
-from logging import info
+import logging
 from pathlib import Path
 
 # External Library
@@ -11,6 +11,10 @@ from onnx import numpy_helper
 # Internal Modules
 from mas.core import LayerOutput, ValueID
 from mas.core import MASElem, MASModel, MASRunner
+from mas.aux import create_driver_logger
+
+# Logger
+logger = create_driver_logger()
 
 # Check onnx version
 #
@@ -481,8 +485,16 @@ def read_from(onnx_path):
 # CLI
 parser = ArgumentParser(description='Analyze .onnx model with .mas script')
 parser.add_argument('-m', '--model-path', metavar='PATH', required=True, dest='MODEL_PATH')
+parser.add_argument('-v', dest='LOG_LEVEL', action='store_const', const=logging.INFO)
+parser.add_argument('-vv', dest='LOG_LEVEL', action='store_const', const=logging.DEBUG)
 
 args, rest = parser.parse_known_args()
+
+if args.LOG_LEVEL is not None:
+  logger.setLevel(args.LOG_LEVEL)
+# if args.LOG_LEVEL: END
+
+logger.info(f'Load "{args.MODEL_PATH}"')
 
 mas_model = read_from(args.MODEL_PATH)
 
