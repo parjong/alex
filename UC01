@@ -1,0 +1,8 @@
+# TODO Port this
+#!/bin/bash
+
+set -exo pipefail
+
+./alex applet install --name A sample-python-applet
+./alex applet run A
+./alex applet uninstall A
