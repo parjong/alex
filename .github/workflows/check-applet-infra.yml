@@ -1,0 +1,35 @@
+name: 'Check applet infrastructure'
+
+on:
+  pull_request:
+    paths:
+      # Trigger this workflow when the test target changes
+      - 'alex'
+      - 'infra/command/applet'
+      - 'infra/applet/**'
+      # Trigger this workflow when the workflow itself changes
+      - '.github/workflows/check-applet-infra.yml'
+
+jobs:
+  check-all:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: 'Check out repository code'
+        uses: actions/checkout@v3
+      - name: 'Run framework tests'
+        working-directory: infra/applet
+        run: |
+          ./test-manage tests/UC000
+      - name: 'Run bash domain tests'
+        working-directory: infra/applet
+        run: |
+          ./test-domain bash domain/bash/samples/r1.0
+      - name: 'Run python3 domain tests'
+        working-directory: infra/applet
+        run: |
+          ./test-domain python3 domain/python3/samples/r1.0
+      - name: 'Run python3 domain tutorial'
+        run: |
+          ./alex applet install infra/applet/domain/python3/samples/r1.0
+          ./alex applet run r1.0
+          ./alex applet uninstall r1.0
