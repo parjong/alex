@@ -1,0 +1,36 @@
+name: 'Check CMake projects'
+
+on:
+  pull_request:
+    paths:
+      # Trigger this workflow when the test target changes
+      - 'alex'
+      - 'infra/command/configure'
+      - 'infra/command/build'
+      - 'infra/command/test'
+      - 'infra/cmake/**'
+      - 'CMakeLists.txt'
+      - 'code/**'
+      # Trigger this workflow when the workflow itself changes
+      - '.github/workflows/check-cmake-projects.yml'
+
+jobs:
+  # Check default configuration
+  check-default:
+    runs-on: ubuntu-18.04
+    steps:      
+      - name: 'Install extra software'
+        # See [1] for pre-installed software
+        #
+        # [1] https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu1804-Readme.md
+        run: |
+          sudo apt update -y
+          sudo apt install -y libprotobuf-dev protobuf-compiler
+      - name: 'Check out repository code'
+        uses: actions/checkout@v3
+      - name: 'Configure'
+        run: ./alex configure
+      - name: 'Build'
+        run: ./alex build
+      - name: 'Test'
+        run: ./alex test
