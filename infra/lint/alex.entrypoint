@@ -1,0 +1,98 @@
+#!/bin/bash
+
+set -eo pipefail
+
+# Ensure that ALEX_PROJECT_PATH is defined
+if [[ -z $ALEX_PROJECT_PATH ]]; then
+  echo "error: internal error: ALEX_PROJECT_PATH is missing"
+  exit 1
+fi
+# TODO Ensure ALEX_PROJECT_PATH is under git control
+
+OPTIONS=$(getopt -o '' --long 'debug' -- "$@")
+eval set -- "$OPTIONS"
+
+LOG=0
+
+while true; do
+  TOK="$1"; shift
+
+  case "$TOK" in
+    --debug)
+      # Enable logging for debugging
+      LOG=1
+      ;;
+    --)
+      break
+      ;;
+  esac
+done
+
+function log()
+{
+  if [[ $LOG -eq 0 ]]; then
+    return
+  fi
+
+  echo $@
+}
+
+function debug()
+{
+  log "DEBUG: from ${BASH_LINENO[0]}: " $@
+}
+
+function process-alexattribute-line()
+{
+  local FILE_RPATH="$1"; shift
+  local DIR_RPATH=$(dirname "$FILE_RPATH")
+
+  local LINENO="$1"; shift
+
+  local PATTERN="$1"; shift
+  local EFFECTIVE_PATTERN="$DIR_RPATH/$PATTERN"
+
+  debug "set EFFECTIVE PATTERN as '$EFFECTIVE_PATTERN'"
+
+  for ATTR in "$@"; do
+    debug "ensure '$ATTR' attribute"
+    case $ATTR in
+      no-trailing-spaces)
+        git ls-files "$EFFECTIVE_PATTERN" | xargs -i sed -i 's/[[:space:]]*$//g' {}
+        ;;
+      *)
+        echo "$(realpath --relative-to=$PWD $FILE_RPATH): $LINENO: error unkonwn attribute: $ATTR"
+        exit 1
+        ;;
+    esac
+    debug "ensure '$ATTR' attribute - Done"
+  done
+}
+
+debug "iterate .alexattribute files"
+for ATTR_FILE in $(git -C "$ALEX_PROJECT_PATH" ls-files "$ALEX_PROJECT_PATH/**.alexattribute"); do
+  debug "check $ATTR_FILE"
+  ATTR_LINE=1
+  while read -r DESCR; do
+    case "$DESCR" in
+      \#*)
+        debug "check $ATTR_FILE:$ATTR_LINE => COMMENT"
+        ;;
+      +[:space:]|"")
+        debug "check $ATTR_FILE:$ATTR_LINE => EMPTY"
+        ;;
+      *)
+        debug "process $ATTR_FILE:$ATTR_LINE"
+        # Turn off globbing to keep '*' and '**' in pattern
+        set -f
+        eval "process-alexattribute-line '$ATTR_FILE' '$ATTR_LINE' $DESCR"
+        set +f
+        ;;
+    esac
+    ATTR_LINE=$(( $ATTR_LINE + 1 ))
+  done < "$ATTR_FILE"
+  debug "check $ATTR_FILE - DONE"
+done
+debug "iterate .alexattribute files - DONE"
+
+# TODO Support plugins (e.g. pylint, clang-tidy, ...)
