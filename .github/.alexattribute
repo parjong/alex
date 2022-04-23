@@ -1,0 +1,2 @@
+# This line states required attributes for workflow files
+workflows/*.yml no-trailing-spaces
