@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export ALEX_PROJECT_PATH
+
+# Invoke lint framework
+"$BASH" "${ALEX_PROJECT_PATH}/infra/lint/alex.entrypoint" "$@"
