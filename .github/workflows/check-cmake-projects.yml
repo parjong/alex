@@ -18,7 +18,7 @@ jobs:
   # Check default configuration
   check-default:
     runs-on: ubuntu-18.04
-    steps:      
+    steps:
       - name: 'Install extra software'
         # See [1] for pre-installed software
         #
