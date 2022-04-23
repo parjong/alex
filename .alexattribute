@@ -1,0 +1,4 @@
+# Let's test quote
+'dir with space/*.2' no-trailing-spaces
+
+

@@ -1,0 +1,2 @@
+# Check workflow files
+workflows/*.yml no-trailing-spaces
