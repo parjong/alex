@@ -69,30 +69,65 @@ function process-alexattribute-line()
   done
 }
 
-debug "iterate .alexattribute files"
-for ATTR_FILE in $(git -C "$ALEX_PROJECT_PATH" ls-files "$ALEX_PROJECT_PATH/**.alexattribute"); do
-  debug "check $ATTR_FILE"
-  ATTR_LINE=1
-  while read -r DESCR; do
-    case "$DESCR" in
-      \#*)
-        debug "check $ATTR_FILE:$ATTR_LINE => COMMENT"
-        ;;
-      +[:space:]|"")
-        debug "check $ATTR_FILE:$ATTR_LINE => EMPTY"
-        ;;
-      *)
-        debug "process $ATTR_FILE:$ATTR_LINE"
-        # Turn off globbing to keep '*' and '**' in pattern
-        set -f
-        eval "process-alexattribute-line '$ATTR_FILE' '$ATTR_LINE' $DESCR"
-        set +f
-        ;;
-    esac
-    ATTR_LINE=$(( $ATTR_LINE + 1 ))
-  done < "$ATTR_FILE"
-  debug "check $ATTR_FILE - DONE"
-done
-debug "iterate .alexattribute files - DONE"
+function check-alexattribute()
+{
+  debug "iterate .alexattribute files"
+  for ATTR_FILE in $(git -C "$ALEX_PROJECT_PATH" ls-files "$ALEX_PROJECT_PATH/**.alexattribute"); do
+    debug "check $ATTR_FILE"
+    ATTR_LINE=1
+    while read -r DESCR; do
+      case "$DESCR" in
+        \#*)
+          debug "check $ATTR_FILE:$ATTR_LINE => COMMENT"
+          ;;
+        +[:space:]|"")
+          debug "check $ATTR_FILE:$ATTR_LINE => EMPTY"
+          ;;
+        *)
+          debug "process $ATTR_FILE:$ATTR_LINE"
+          # Turn off globbing to keep '*' and '**' in pattern
+          set -f
+          eval "process-alexattribute-line '$ATTR_FILE' '$ATTR_LINE' $DESCR"
+          set +f
+          ;;
+      esac
+      ATTR_LINE=$(( $ATTR_LINE + 1 ))
+    done < "$ATTR_FILE"
+    debug "check $ATTR_FILE - DONE"
+  done
+  debug "iterate .alexattribute files - DONE"
+}
 
-# TODO Support plugins (e.g. pylint, clang-tidy, ...)
+function echo_usage
+{
+  echo "SUPPORTED COMMAND"
+  echo
+  echo "  run-all"
+  echo "    invoke every lint tools at once"
+}
+
+COMMAND="$1"; shift
+
+if [[ -z $COMMAND ]]; then
+  echo "error: missing argument: COMMAND"
+  echo
+  echo_usage
+  exit 1
+fi
+
+case $COMMAND in
+  run-all)
+    check-alexattribute
+    # TODO Support plugins (e.g. pylint, clang-tidy, ...)
+    ;;
+  help)
+    echo_usage
+    exit 0
+    ;;
+  *)
+    echo "error: unkonwn command: $COMMAND"
+    echo
+    echo_usage
+    exit 1
+    ;;
+esac
