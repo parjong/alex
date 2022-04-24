@@ -108,13 +108,7 @@ function(ExternalSource_Download PREFIX)
   set(STAMP_FILE "${EXTERNAL_DIR}/${DIRNAME}.stamp")
 
   Stamp_Check(STAMP_VALID "${STAMP_FILE}" "${URL}")
-
-  if(NOT STAMP_VALID)
-    # Remove invalid STAMP
-    if(EXISTS "${STAMP_FILE}")
-      file(REMOVE "${STAMP_FILE}")
-    endif(EXISTS "${STAMP_FILE}")
-  endif(NOT STAMP_VALID)
+  Stamp_Remove_Unless("${STAMP_FILE}" "${STAMP_VALID}")
 
   if(NOT STAMP_VALID)
     set(WORKING_DIR "${EXTERNAL_DIR}/${DIRNAME}-tmp")
@@ -126,7 +120,7 @@ function(ExternalSource_Download PREFIX)
       WORKING_DIRECTORY "${WORKING_DIR}"
     )
 
-    file(WRITE "${STAMP_FILE}" "${URL}")
+    Stamp_Create("${STAMP_FILE}" "${URL}")
   endif()
 
   set(${PREFIX}_SOURCE_DIR "${SOURCE_DIR}" PARENT_SCOPE)

@@ -27,7 +27,20 @@ case "${COMMAND}" in
       -D PKG_VERSION="${PKG_VERSION}" \
       -P "${ALEX_PROJECT_PATH}/infra/cmake/scripts/3rdparty-download.cmake"
     ;;
-  # TODO Support install
+  "install")
+    export PKG_NAME="$1";
+    export PKG_VERSION="$2";
+
+    # TODO Check PKG_NAME
+    # TODO Check PKG_VERSION
+
+    cmake \
+      -D ALEX_PROJECT_SOURCE_DIR="${ALEX_PROJECT_PATH}" \
+      -D PKG_NAME="${PKG_NAME}" \
+      -D PKG_VERSION="${PKG_VERSION}" \
+      -P "${ALEX_PROJECT_PATH}/infra/cmake/scripts/3rdparty-install.cmake"
+    ;;
+
   # TODO Support uninstall
   *)
     echo "INVALID COMMAND '${COMMAND}'"
