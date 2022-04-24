@@ -13,3 +13,4 @@ Protobuf_Generate(CAFFE_PROTO
 add_executable(caffekit ${SRCS} ${CAFFE_PROTO_SOURCES})
 target_include_directories(caffekit PRIVATE ${CAFFE_PROTO_INCLUDE_DIRS})
 target_link_libraries(caffekit PRIVATE ${CAFFE_PROTO_LIBRARIES})
+target_link_libraries(caffekit PRIVATE cli)
