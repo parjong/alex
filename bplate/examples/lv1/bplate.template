@@ -1,0 +1,5 @@
+with open(bplate_template_dir / 'MESSAGE', 'r') as f:
+  print(f.read())
+
+with open(bplate_output_dir / 'action.yml', 'w') as f:
+  print('name: X', file=f)
