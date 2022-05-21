@@ -1,0 +1,23 @@
+diff --git a/demo/demo/__init__.py b/demo/demo/__init__.py
+index b794fd4..73cc876 100644
+--- a/demo/demo/__init__.py
++++ b/demo/demo/__init__.py
+@@ -1 +1,7 @@
+ __version__ = '0.1.0'
++
++def run():
++  print('Hello, World')
++
++if __name__ == "__main__":
++  run()
+diff --git a/demo/pyproject.toml b/demo/pyproject.toml
+index c01deab..d3dac45 100644
+--- a/demo/pyproject.toml
++++ b/demo/pyproject.toml
+@@ -13,3 +13,6 @@ pytest = "^5.2"
+ [build-system]
+ requires = ["poetry-core>=1.0.0"]
+ build-backend = "poetry.core.masonry.api"
++
++[tool.poetry.scripts]
++awesome = 'demo:run'
