@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Hello, World"
+
+echo "BPLATE_OUTPUT_DIR: $BPLATE_OUTPUT_DIR"
+echo "BPLATE_PLUGIN_DIR: $BPLATE_PLUGIN_DIR"
+echo "$@"
+
+mkdir -p "$BPLATE_OUTPUT_DIR/.github/workflows"
+# TODO Allow users to set .yml filename
+cp "$BPLATE_PLUGIN_DIR/workflow.yml" "$BPLATE_OUTPUT_DIR/.github/workflows/check_pull_request.yml"

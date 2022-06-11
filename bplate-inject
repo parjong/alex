@@ -1,0 +1,47 @@
+#!/bin/bash
+
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+OPTIONS=$(getopt -o 'o:' --long '' -- "$@")
+eval set -- "$OPTIONS"
+while true; do
+  CUR_TOKEN="$1"; shift
+  case "$CUR_TOKEN" in
+    -o)
+      BPLATE_OUTPUT_DIR="$1"; shift
+      ;;
+    --)
+      break
+      ;;
+  esac
+done
+
+if [[ -z $BPLATE_OUTPUT_DIR ]]; then
+  echo "error: missing option: -o"
+  exit 1
+fi
+
+if [[ ! -e "$BPLATE_OUTPUT_DIR" ]]; then
+  echo "error: '$BPLATE_OUTPUT_DIR' does not exist"
+  exit 1
+fi
+
+if [[ ! -d "$BPLATE_OUTPUT_DIR" ]]; then
+  echo "error: '$BPLATE_OUTPUT_DIR' is not a directoryt"
+  exit 1
+fi
+
+BPLATE_PLUGIN_DIR="$1"; shift
+BPLATE_PLUGIN_ENTRYPOINT="$BPLATE_PLUGIN_DIR/bplate.entrypoint"
+
+if [[ ! -f "$BPLATE_PLUGIN_ENTRYPOINT" ]]; then
+  echo "error: invalid plugin: '$BPLATE_PLUGIN_DIR'"
+  exit 1
+fi
+
+
+# Q. Which servcies are necessary for plugins?
+export BPLATE_PLUGIN_DIR
+export BPLATE_OUTPUT_DIR
+
+"$BASH" -eo pipefail "$BPLATE_PLUGIN_ENTRYPOINT" "$@"

@@ -1,0 +1,72 @@
+doc_url = "https://docs.github.com/en/enterprise-server@3.2/actions/creating-actions/metadata-syntax-for-github-actions"
+
+action_yml = f"""# See {doc_url}
+name: 'Fill in your action name'
+description: 'Describe your action'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+"""
+
+with open(bplate_output_dir / 'action.yml', 'w') as f:
+  f.write(action_yml)
+
+index_js = """
+const core = require('@actions/core');
+const github = require('@actions/github');
+
+async function run() {
+  try {
+    // Use core.getInput('name') to get an action input
+    // Use core.setOutput('name', value) to set an action output
+    // Use core.info for logging
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
+run()
+"""
+
+with open(bplate_output_dir / 'index.js', 'w') as f:
+  f.write(index_js)
+
+with open(bplate_output_dir / '.gitattributes', 'a') as f:
+  f.write('dist/** -diff linguist-generated=true')
+
+with open(bplate_output_dir / '.gitignore', 'a') as f:
+  f.write('node_modules/')
+
+guide = f"""
+Implementation Guide
+-------------------
+
+# Change working directory
+cd '{bplate_output_dir}'
+
+# Install minimal npm dependencies
+npm install
+
+# Add git configuration
+git add .gitignore .gitattributes
+
+# Change action.yml and index.js
+
+# Change package.json
+# You may use npm to add (or remove) dependencies
+
+# Add action.yml and index.js
+git add action.yml index.js
+
+# Add extra files (if necessary)
+
+# Add npm configuration
+git add package.json package-lock.json
+
+# Prepare a distribution package
+npm run prepare
+
+# Add the distribution package
+git add dist
+"""
+print(guide)

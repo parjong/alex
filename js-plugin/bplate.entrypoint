@@ -1,0 +1,168 @@
+#!/bin/bash
+
+# OVERVIEW
+#
+# Create Github JavaScript Action boilerplate
+#
+function echo_usage()
+{
+  echo "USAGE: --github-version <GITHUB VERSION> ..."
+  echo
+  echo "SUPPORTED GITHUB VERSION"
+  echo
+  echo "  latest"
+  echo "  enterprise-server@3.2"
+  echo
+  echo "EXTRA OPTIONS"
+  echo
+  echo "  --action-name"
+  echo
+  echo "    Set action name"
+  # TODO Support more versions
+}
+# REFERENCES
+#
+# - https://github.com/actions/hello-world-javascript-action
+# - https://github.com/actions/javascript-action
+#
+
+# Set default parameters
+ACTION_NAME=""
+ACTION_YML_NAME="Your action name here"
+
+# Parse command-line arguments
+OPTIONS=$(getopt -o '' --long 'github-version:,action-name:' -- "$@")
+eval set -- "$OPTIONS"
+while true; do
+  CUR_TOKEN="$1"; shift
+  case "$CUR_TOKEN" in
+    --github-version)
+      GITHUB_VERSION="$1"; shift
+      ;;
+    --action-name)
+      ACTION_NAME="$1"; shift
+      ACTION_YML_NAME="$1"
+      ;;
+    --)
+      break
+      ;;
+  esac
+done
+
+if [[ -z $GITHUB_VERSION ]]; then
+  echo "error: missiong option: --github-version"
+  exit 1
+fi
+
+case $GITHUB_VERSION in
+  latest)
+    GITHUB_DOC_URL="https://docs.github.com/en"
+    ;;
+  enterprise-server@3.2)
+    GITHUB_DOC_URL="https://docs.github.com/en/enterprise-server@3.2"
+    ;;
+  *)
+    echo "error: invalid github version: '$GITHUB_VERSION'"
+    exit 1
+    ;;
+esac
+
+# Create 'action.yml'
+#
+# DESIGN NOTE: Why node12?
+#
+# For better coverage
+cat > "$BPLATE_OUTPUT_DIR/action.yml" <<EOL
+name: '$ACTION_YML_NAME'
+description: 'Describe your action'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+# See ${GITHUB_DOC_URL}/actions/creating-actions/metadata-syntax-for-github-actions and fill the rest
+EOL
+
+# Create index.js
+cat > "$BPLATE_OUTPUT_DIR/index.js" <<EOL
+const core = require('@actions/core');
+const github = require('@actions/github');
+
+async function run() {
+  try {
+    // Use core.getInput('name') to get an action input
+    // Use core.setOutput('name', value) to set an action output
+    // Use core.info for logging
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
+run();
+EOL
+
+# Create "package.json"
+#
+# DESIGN NOTE: Why 'name' is empty?
+#
+# Github Action allows space in name, but npm does not.
+#
+# TODO Set 'license' properly
+cat > "$BPLATE_OUTPUT_DIR/package.json" <<EOL
+{
+  "name": "",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.31.1"
+  }
+}
+EOL
+
+# Create .gitattributes
+cat > "$BPLATE_OUTPUT_DIR/.gitattributes" <<EOL
+dist/** -diff linguist-generated=true
+EOL
+
+# Create .gitignore
+cat > "$BPLATE_OUTPUT_DIR/.gitignore" <<EOL
+node_modules/
+EOL
+
+echo "Implementation Guide"
+echo "-------------------"
+echo
+echo "# Change working directory"
+echo "cd '$BPLATE_OUTPUT_DIR'"
+echo
+echo "# Install minimal npm dependencies"
+echo "npm install"
+echo
+echo "# Add git configuration"
+echo "git add .gitignore .gitattributes"
+echo
+echo "# Change action.yml and index.js"
+echo
+echo "# Change package.json"
+echo "# You may use npm to add (or remove) dependencies"
+echo
+echo "# Add action.yml and index.js"
+echo "git add action.yml index.js"
+echo
+echo "# Add extra files (if necessary)"
+echo
+echo "# Add npm configuration"
+echo "git add package.json package-lock.json"
+echo
+echo "# Prepare a distribution package"
+echo "npm run prepare"
+echo
+echo "# Add the distribution package"
+echo "git add dist"
