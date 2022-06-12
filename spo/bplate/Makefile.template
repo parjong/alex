@@ -1,0 +1,19 @@
+# What is this for?
+#
+# This Makefile template shows how to set up local development environment and run basic checks.
+all:
+
+setup:
+	# bplate manages development environment with poetry.
+	# Please read https://python-poetry.org/docs first.
+	poetry install
+
+lint:
+	poetry run pylint bplate
+
+test_inject_with_howto_write_template:
+	rm -rf local/inject/howto_write_template
+	mkdir -p local/inject/howto_write_template
+	poetry run python -m bplate.cli.inject -o local/inject/howto_write_template howto/write_template
+	ls -al local/inject/howto_write_template
+	cat local/inject/howto_write_template/MESSAGE
