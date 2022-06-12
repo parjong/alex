@@ -1,0 +1,9 @@
+# bplate provides 'bplate_template_dir' variable of pathlib.Path type,
+# which permits each template to access itself.
+with open(bplate_template_dir / 'MESSAGE', 'r') as f:
+  content = f.read()
+
+# bplate provides 'bplate_output_dir' variable of pathlib.Path type,
+# which permits each template to access an output directory.
+with open(bplate_output_dir / 'MESSAGE', 'w') as f:
+  f.write(content)
