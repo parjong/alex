@@ -1,0 +1,7 @@
+import tensorflow as tf
+
+inp = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 4, 2, 3))
+out = tf.image.resize(inp, [8, 4])
+
+tfgex_set_inputs(inp)
+tfgex_set_outputs(out)

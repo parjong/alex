@@ -1,0 +1,7 @@
+import tensorflow as tf
+
+inp = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 16, 16, 3))
+out = tf.nn.leaky_relu(inp)
+
+tfgex_set_inputs(inp)
+tfgex_set_outputs(out)

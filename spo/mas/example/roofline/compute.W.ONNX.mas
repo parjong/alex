@@ -1,83 +1,79 @@
+# What is this .mas script for
+#
+# This script computes MAC (Multiply-accumulate) operation count
+import logging
 from logging import warn
 
-# Use this helper for operations without computation (e.g. CONCAT, TRANSPOSE)
-def zero(l):
-  return 0
+def ignored(reason):
+  def f(l):
+    global logging
+    logging.debug(f'OPS from {l.ind}:{l.op} is ignored (reason)')
+    return 0
+  # def f: END
+  return f
+# def ignored: END
 
-# Use this helper for operations with complex semantics
-def sophisticated(l):
-  global warn
-  warn(f'OPS from {l.op} is ignored (too complex to compute)')
-  return 0
 
-def unimplemented(l):
-  global warn
-  warn(f'OPS from {l.op} is ignored (not implemented, yet)')
-  return 0
+# Use this helper for operations without MAC operation (e.g. CONCAT, TRANSPOSE)
+def out_of_scope():
+  global ignored
+  return ignored('no MAC operation')
+# def out_of_scope: END
 
-def avgpool2d(l):
-  FLT_H = int(l.attr('FilterHeight'))
-  FLT_W = int(l.attr('FilterWidth'))
 
-  assert l.output_count == 1
-  out_value = l.output(0)
-  assert out_value.rank == 4
+def unimplemented():
+  def f(l):
+    global warn
+    warn(f'OPS from {l.ind}:{l.op} is ignored (not implemented, yet)')
+    return 0
+  # def f: END
+  return f
+# def unimplemented: END
 
-  OPS_PER_OUT_ELEM = 0
-  # Accumulate pixels in window
-  OPS_PER_OUT_ELEM += FLT_H * FLT_W
-  # Divide
-  OPS_PER_OUT_ELEM += 1
 
-  return OPS_PER_OUT_ELEM * out_value.elem_count
+# from ONNX 11
+#
+# See https://github.com/onnx/onnx/blob/main/docs/Operators.md#conv
+#
+# Changes(?)
+# - All input/outputs are marked as 'differentiable'
+#
+# from ONNX 1
+#
+# https://github.com/onnx/onnx/blob/main/docs/Changelog.md#Conv-1
+def conv(version):
+  def R1(l):
+    assert l.input_count >= 2
+    assert l.input_count <= 3
+    ifm_value = l.input(0)
+    wgt_value = l.input(1)
 
-def conv2d(l):
-  assert l.input_count >= 2
-  assert l.input_count <= 3
-  ifm_value = l.input(0)
-  wgt_value = l.input(1)
+    assert l.output_count == 1
+    out_value = l.output(0)
 
-  IFM_C = ifm_value.dim(3)
+    # NCHW
+    assert ifm_value.rank == 4
+    IFM_C = ifm_value.dim(1)
 
-  FLT_H = wgt_value.dim(1)
-  FLT_W = wgt_value.dim(2)
+    # NCHW
+    assert out_value.rank == 4
 
-  assert l.output_count == 1
-  out_value = l.output(0)
+    # Group convolution is not yet supported
+    assert l.attr('group') == 1
+    FLT_H, FLT_W = l.attr('kernel_shape')
 
-  assert out_value.rank == 4
+    OPS_PER_OUT_ELEM = 0
+    # For each IFM/FLT pixel pair:
+    #   One multiplication
+    #   One addition (for accumulation)
+    OPS_PER_OUT_ELEM += 2 * FLT_H * FLT_W * IFM_C
+    # Add a bias
+    OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
 
-  OPS_PER_OUT_ELEM = 0
-  # For each IFM/FLT pixel:
-  #   One multiplication
-  #   One addition (for accumulation)
-  OPS_PER_OUT_ELEM += 2 * FLT_H * FLT_W * IFM_C
-  # Add a bias
-  OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
-
-  return OPS_PER_OUT_ELEM * out_value.elem_count
-
-# This assumes that reference deconv2d kernel
-def dconv2d_ref(l):
-  assert l.input_count >= 2
-  assert l.input_count <= 3
-  wgt_value = l.input(1)
-
-  FLT_H = wgt_value.dim(1)
-  FLT_W = wgt_value.dim(2)
-
-  assert l.output_count == 1
-  out_value = l.output(0)
-
-  assert out_value.rank == 4
-
-  OPS_PER_OUT_ELEM = 0
-  # Multiply each IFM/FLT pixel and accumulate
-  OPS_PER_OUT_ELEM += 2 * FLT_H * FLT_W
-  # Add a bias
-  OPS_PER_OUT_ELEM += 1 if l.input_count == 3 else 0
-
-  return OPS_PER_OUT_ELEM * out_value.elem_count
+    return OPS_PER_OUT_ELEM * out_value.elem_count
+  # def R1: END
+  return R1
+# def conv: END
 
 def tconv2d(l):
   warn(f'OPS from layer {l.ind} ({l.op}) is not verified, yet')
@@ -175,31 +171,33 @@ def fully_connected(l):
   # TODO Revisit this definition
   return B * OUT_ELEM * OPS_PER_OUT_ELEM
 
+def analyze(l):
+  print(l.attr_keys)
+  exit(1)
+  return
+
 # How to compute OPS per each layer
+# OPNAME -> HELPER
 rules = { }
 
-rules['ADD'] = eltwise_binary
-rules['AVERAGE_POOL_2D'] = avgpool2d
-rules['CONCATENATION'] = zero
-rules['CONV_2D'] = conv2d
-rules['DEPTHWISE_CONV_2D'] = dconv2d_ref
-rules['FULLY_CONNECTED'] = fully_connected
-rules['LEAKY_RELU'] = unimplemented
-rules['LOGISTIC'] = sophisticated
-rules['MAX_POOL_2D'] = zero
-rules['MEAN'] = reduce_mean
-rules['MUL'] = eltwise_binary
-rules['PAD'] = zero
-rules['RESHAPE'] = zero
-rules['RESIZE_BILINEAR'] = unimplemented
-rules['SOFTMAX'] = sophisticated
-rules['SQUEEZE'] = zero
-rules['TRANSPOSE'] = zero
-rules['TRANSPOSE_CONV'] = tconv2d
+rules['ai.onnx.Add'] = eltwise_binary
+rules['ai.onnx.AveragePool'] = out_of_scope()
+rules['ai.onnx.BatchNormalization'] = ignored('expect to be fused')
+rules['ai.onnx.Concat'] = out_of_scope()
+# ONNX v9
+rules['ai.onnx.Conv'] = conv(1)
+rules['ai.onnx.Flatten'] = out_of_scope()
+rules['ai.onnx.Gemm'] = fully_connected
+rules['ai.onnx.GlobalAveragePool'] = out_of_scope()
+rules['ai.onnx.MaxPool'] = out_of_scope()
+rules['ai.onnx.Neg'] = out_of_scope() # Q. Is this true?
+rules['ai.onnx.Pad'] = out_of_scope()
+rules['ai.onnx.Relu'] = out_of_scope()
+rules['ai.onnx.Squeeze'] = out_of_scope()
 
 # Analyze model
 mas = get_mas_session()
-assert mas.model.opset.startswith('TFL')
+assert mas.model.opset.startswith('onnx')
 
 # Iterate each layer
 MODEL_OPS = 0
@@ -210,4 +208,5 @@ for layer in mas.model.layers:
   MODEL_OPS += LAYER_OPS
 # for: END
 
+logging.info(f'OPS count is {MODEL_OPS}')
 mas.set_attr('roofline.W.model', MODEL_OPS)

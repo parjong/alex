@@ -23,12 +23,14 @@ for layer in mas.model.layers:
       continue
     # Layer Input incurs 'HOST -> DEVICE' traffic if it is not an output of previous layer.
     transferred_value_set.add(layer_input_value.id)
+# for layer: END
 
 for value in mas.model.outputs:
   if not value.is_layer_output():
     continue
   # Model Output from 'Layer Output' incurs 'DEVICE -> HOST' traffic
   transferred_value_set.add(value.id)
+# for value: END
 
 # Iterate transferred_value_set, and accumulate traffic
 memory_traffic = 0.0
@@ -38,3 +40,17 @@ for value_id in transferred_value_set:
 
 info(f'Q (ideal) is {memory_traffic} bytes')
 mas.set_attr('roofline.Q.model.ideal', memory_traffic)
+
+# Compute layer-by-layer memory traffic
+memory_traffic = 0.0
+
+for layer in mas.model.layers:
+  for layer_input_value in layer.inputs:
+    memory_traffic += layer_input_value.byte_size
+
+  for layer_output_value in layer.outputs:
+    memory_traffic += layer_output_value.byte_size
+# for layer: END
+
+info(f'Q (layer-by-layer) is {memory_traffic} bytes')
+mas.set_attr('roofline.Q.model.layer_by_layer', memory_traffic)

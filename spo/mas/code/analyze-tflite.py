@@ -2,6 +2,7 @@
 from argparse import ArgumentParser
 import logging
 from pathlib import Path
+import sys
 
 # External Library
 import tflite
@@ -396,7 +397,7 @@ def read_from(tflite_path, graph_index=None):
   return mas_model
 
 # CLI
-parser = ArgumentParser(description='Analyze .tflite model with .mas scrikpts')
+parser = ArgumentParser(description='Analyze .tflite model with .mas scripts')
 parser.add_argument('-m', '--model-path', metavar='PATH', required=True, dest='MODEL_PATH')
 parser.add_argument('-v', dest='LOG_LEVEL', action='store_const', const=logging.INFO)
 parser.add_argument('-vv', dest='LOG_LEVEL', action='store_const', const=logging.DEBUG)

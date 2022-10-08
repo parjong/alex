@@ -22,6 +22,7 @@ class SourceID:
 ModelInput = SourceID('MI')
 ModelConst = SourceID('MC')
 LayerOutput = SourceID('LO')
+# Q. How to treat LayerConst?
 # Possible Value Sources: END
 
 class ValueID:
@@ -162,6 +163,9 @@ class MASTensorEndpoint:
   @property
   def byte_size(self):
     return self.elem_count * (self.elem.avgbit / 8)
+
+  def is_model_input(self):
+    return self.id.src == ModelInput
 
   def is_model_const(self):
     return self.id.src == ModelConst
