@@ -1,0 +1,13 @@
+# A .txlintrc file is a YAML file for txlint tools
+- rules:
+  - notrailingspaces
+  pattern: '*.txt' # The above rules are applied to files in this directory
+- rules:
+  - notrailingspaces
+  pattern: '**/*.md' # The above rules are applied to files in this directory
+# Let's permit trailing spaces in this file
+- pattern: '*.md' # The above rules are applied to files in this directory
+
+# Q. How to support excludes pattern?
+# .gitignore supports rule override
+# 

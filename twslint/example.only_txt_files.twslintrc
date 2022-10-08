@@ -1,0 +1,12 @@
+# A .twslintrc file is a YAML file for twslint tools
+
+# 'selection' section describes files of interest.
+selection:
+- pattern: 'examples/**/*.txt'
+  action: 'include'
+- pattern: 'examples/exception/**/*.txt'
+  action: 'exclude' # Exclude these files from check
+# twslint interprets patterns are prefixed by the directory that contains this .twslintrc file.
+#
+# So, the above configuration lets twslint to check all .txt files under 'examples'
+# except .txt files under 'examples/exception'.

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "twslint"
+version = "0.1.0"
+description = ""
+authors = ["Jonghyun Park <parjong@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+click = "^8.0"
+PyYAML = "^6.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.13"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
